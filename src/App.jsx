@@ -57,7 +57,8 @@ SECTION 2 — Stock/fund holdings (right panel). Each holding sits under a secti
 - "成長" = any NISA成長投資枠 section (株式 OR 投資信託)
 - "旧"   = 旧NISA預り
 - "積立" = つみたて投資枠
-Format: [{"n":"銘柄名","mv":評価額,"g":損益,"p":損益率,"c":"特定|成長|旧|積立"}]
+Also extract "cd" = 証券コード (4-digit stock code e.g. "7203", or fund code). Leave null if not visible.
+Format: [{"n":"銘柄名","cd":"1234ornull","mv":評価額,"g":損益,"p":損益率,"c":"特定|成長|旧|積立"}]
 
 Output ALL items (cash + holdings) in one flat JSON array.`
     : scopeId === "bank"
@@ -70,7 +71,8 @@ Format: [{"n":"普通預金","mv":残高,"g":0,"p":0}]`
 - "g" = 評価損益 in the LOCAL currency.
 - "p" = g ÷ (mv - g) × 100, 2 decimals.
 - "jpy" = the 円換算 evaluation amount IF the screen explicitly shows a yen value; otherwise null.
-Format: [{"n":"銘柄名","cur":"USD","mv":現地評価額,"g":現地損益,"p":損益率,"jpy":円換算額ornull}]`
+Also extract "cd" = ticker symbol (e.g. "AAPL", "NVDA"). Leave null if not shown.
+Format: [{"n":"銘柄名","cd":"TICKERornull","cur":"USD","mv":現地評価額,"g":現地損益,"p":損益率,"jpy":円換算額ornull}]`
     : scopeId === "coincheck"
     ? `This is a Coincheck cryptocurrency holdings screen (Japanese, values in JPY).
 For each coin output its symbol, JPY valuation, and quantity held.
@@ -122,6 +124,7 @@ Format: [{"n":"住宅ローン","mv":残高,"g":0,"p":0}]`
       if (o.n != null && o.mv != null) {
         holdings.push({
           name: String(o.n),
+          code: o.cd ? String(o.cd) : null,
           market_value: Number(o.mv),
           gain_loss: o.g != null ? Number(o.g) : null,
           gain_loss_pct: o.p != null ? Number(o.p) : null,
@@ -541,6 +544,85 @@ Names: ${JSON.stringify(names)}`;
 }
 
 
+
+// チャートモーダル（TradingViewウィジェット埋め込み）
+function ChartModal({ modal, onClose, C }) {
+  if (!modal) return null;
+  const { name, code, market } = modal;
+
+  // TradingViewのシンボルを組み立て
+  let symbol = "";
+  if (market === "us") {
+    symbol = code ? `NASDAQ:${code}` : "";
+  } else if (market === "jp") {
+    // 日本株: TSE:1234
+    symbol = code ? `TSE:${code}` : "";
+  } else if (market === "crypto") {
+    // BTC→BTCJPY など
+    symbol = code ? `${code}JPY` : "";
+  }
+
+  // Yahoo Finance のチャートURLをiframeで表示（TradingViewはCSP制限があるため）
+  const yahooSymbol = market === "jp" && code ? `${code}.T` : code || name;
+  const chartUrl = market === "us"
+    ? `https://finance.yahoo.com/chart/${code || name}`
+    : market === "jp" && code
+    ? `https://finance.yahoo.co.jp/quote/${code}.T/chart`
+    : `https://finance.yahoo.co.jp/search/?query=${encodeURIComponent(name)}`;
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, width: "100%", maxWidth: 680, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        {/* ヘッダー */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{name}</div>
+            {code && <div style={{ fontSize: 11, color: C.accent, marginTop: 2 }}>{code} · {market === "us" ? "米国株" : market === "jp" ? "国内株" : "暗号資産"}</div>}
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: C.dim, padding: "4px 8px" }}>✕</button>
+        </div>
+        {/* チャートリンクボタン群 */}
+        <div style={{ padding: "16px 18px", display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {market === "jp" && code && (
+            <>
+              <a href={`https://finance.yahoo.co.jp/quote/${code}.T/chart`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📈 Yahooファイナンス チャート
+              </a>
+              <a href={`https://kabutan.jp/stock/chart?code=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📊 株探
+              </a>
+              <a href={`https://www.nikkei.com/nkd/company/?scode=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📰 日経
+              </a>
+            </>
+          )}
+          {market === "us" && code && (
+            <>
+              <a href={`https://finance.yahoo.com/chart/${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📈 Yahoo Finance Chart
+              </a>
+              <a href={`https://www.tradingview.com/chart/?symbol=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📊 TradingView
+              </a>
+              <a href={`https://finance.yahoo.com/quote/${code}/financials/`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+                📰 Financials
+              </a>
+            </>
+          )}
+          {(!code) && (
+            <a href={`https://finance.yahoo.co.jp/search/?query=${encodeURIComponent(name)}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+              🔍 {name} を検索
+            </a>
+          )}
+        </div>
+        <div style={{ padding: "0 18px 16px", fontSize: 11, color: C.dim }}>
+          タップで外部サイトが開きます。チャートはブラウザで確認できます。
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // APIキー設定画面
 function ApiKeySetup({ onSave }) {
   const [key, setKey] = React.useState("");
@@ -602,6 +684,9 @@ export default function App() {
     return k;
   });
   if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
+  const [theme, setTheme] = useState(() => localStorage.getItem("zenith_theme") || "dark");
+  const isDark = theme === "dark";
+  const toggleTheme = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); localStorage.setItem("zenith_theme", t); };
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
   const [history, setHistory] = useState([]);
@@ -626,6 +711,8 @@ export default function App() {
   const [stockError, setStockError] = useState(null);
   const [stockUpdatedAt, setStockUpdatedAt] = useState(null);
   const [stockExpanded, setStockExpanded] = useState({});
+  const [holdingSort, setHoldingSort] = useState("mv"); // mv / gl / pct
+  const [chartModal, setChartModal] = useState(null); // { name, code, market }
   const [status, setStatus] = useState({});
   const [errors, setErrors] = useState({});
   const [loaded, setLoaded] = useState(false);
@@ -1365,10 +1452,14 @@ web検索で以下の一次情報を中心に調査してください：
   const taxableRealized = realizedThisYear.filter((r) => r.tax === "特定" || r.tax === "一般").reduce((s, r) => s + (r.pl || 0), 0);
   const hasRealized = realized.length > 0;
 
-  const C = {
-    bg: "#0A0E1A", surface: "rgba(20,27,45,0.7)", border: "#1E293B",
+  const C = isDark ? {
+    bg: "#0A0E1A", surface: "rgba(20,27,45,0.9)", border: "#1E293B",
     text: "#F1F5F9", muted: "#94A3B8", dim: "#475569",
-    pos: "#10B981", neg: "#F87171", accent: "#3B82F6",
+    accent: "#3B82F6", pos: "#10B981", neg: "#EF4444",
+  } : {
+    bg: "#F1F5F9", surface: "#FFFFFF", border: "#E2E8F0",
+    text: "#0F172A", muted: "#475569", dim: "#94A3B8",
+    accent: "#2563EB", pos: "#059669", neg: "#DC2626",
   };
 
   const tabBtn = (id, label, icon) => (
@@ -1690,18 +1781,34 @@ web検索で以下の一次情報を中心に調査してください：
                   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden", overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr>{["銘柄", "評価額", "含み損益", "損益率"].map((th, i) => (
-                          <th key={i} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: C.dim, fontWeight: 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{th}</th>
+                        <tr>{[
+                          { l: "銘柄", k: null },
+                          { l: "評価額", k: "mv" },
+                          { l: "含み損益", k: "gl" },
+                          { l: "損益率", k: "pct" },
+                        ].map(({ l, k }, i) => (
+                          <th key={i} onClick={() => k && setHoldingSort(holdingSort === k ? null : k)} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k && holdingSort === k ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k ? "pointer" : "default", userSelect: "none" }}>
+                            {l}{k && holdingSort === k ? " ▼" : k ? " ↕" : ""}
+                          </th>
                         ))}</tr>
                       </thead>
                       <tbody>
-                        {hs.map((h, i) => (
+                        {[...hs].sort((a, b) => {
+                          if (holdingSort === "mv") return (b.market_value || 0) - (a.market_value || 0);
+                          if (holdingSort === "gl") return (b.gain_loss || 0) - (a.gain_loss || 0);
+                          if (holdingSort === "pct") return (b.gain_loss_pct || 0) - (a.gain_loss_pct || 0);
+                          return 0;
+                        }).map((h, i) => (
                           <tr key={i}>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {h.name}
-                              {h.currency && (
-                                <span style={{ marginLeft: 6, fontSize: 9.5, fontWeight: 600, color: cat.color, border: `1px solid ${cat.color}66`, borderRadius: 4, padding: "1px 4px", verticalAlign: "middle" }}>{h.currency}</span>
-                              )}
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 200, cursor: "pointer" }}
+                              onClick={() => setChartModal({ name: h.name, code: h.code, market: cat.id === "us" ? "us" : cat.id === "crypto" ? "crypto" : "jp" })}>
+                              <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {h.name}
+                              </div>
+                              <div style={{ display: "flex", gap: 4, marginTop: 2, flexWrap: "wrap" }}>
+                                {h.code && <span style={{ fontSize: 9.5, fontWeight: 700, color: C.accent, background: `${C.accent}18`, borderRadius: 3, padding: "1px 4px" }}>{h.code}</span>}
+                                {h.currency && <span style={{ fontSize: 9.5, fontWeight: 600, color: cat.color, border: `1px solid ${cat.color}66`, borderRadius: 3, padding: "1px 4px" }}>{h.currency}</span>}
+                              </div>
                             </td>
                             <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
                               {fmt(h.market_value)}
