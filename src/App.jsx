@@ -13,6 +13,7 @@ const UPLOADS = [
 
 // ── 集計区分 ──
 const CATEGORIES = [
+  { id: "cash_sbi",    label: "SBI買付余力（現金）", color: "#38BDF8" },
   { id: "tokutei",     label: "特定預り",       color: "#3B82F6" },
   { id: "nisa_growth", label: "NISA成長投資枠", color: "#8B5CF6" },
   { id: "nisa_old",    label: "旧NISA",         color: "#6366F1" },
@@ -23,7 +24,7 @@ const CATEGORIES = [
   { id: "bank",        label: "住信SBI銀行",    color: "#64748B" },
   { id: "loan",        label: "住宅ローン残高", color: "#EF4444", isLiability: true },
 ];
-const CAT_MAP = { "特定": "tokutei", "成長": "nisa_growth", "旧": "nisa_old", "積立": "tsumitate" };
+const CAT_MAP = { "特定": "tokutei", "成長": "nisa_growth", "旧": "nisa_old", "積立": "tsumitate", "cash": "cash_sbi" };
 const SCOPE_CAT = { sbi_us: "us", paypay: "paypay", bank: "bank", coincheck: "crypto", loan: "loan" };
 const STORAGE_KEY = "portfolio_data_v3";
 const RE_KEY = "realestate_v1"; // 不動産データは独立キーで保存（他の同期に影響されない）
@@ -45,12 +46,20 @@ Calculation rules:
 - Include EVERY row across ALL sections. Keep names short.`;
 
   const schema = scopeId === "sbi_jp"
-    ? `Each holding sits under a section header. Add "c" classifying it:
+    ? `This screen may contain two sections: (1) a left panel with cash/balance info, and (2) a right panel with stock holdings.
+
+SECTION 1 — Cash (left panel). If you see 「買付余力」or「現金残高等」or「保有資産評価」block, extract the cash balance:
+- Look for 「現金残高等（合計）」or「買付余力(2営業日後)」— use whichever shows the total available cash.
+- Output as: {"n":"買付余力","mv":金額,"g":0,"p":0,"c":"cash"}
+
+SECTION 2 — Stock/fund holdings (right panel). Each holding sits under a section header. Add "c" classifying it:
 - "特定" = 株式(現物/特定預り)
 - "成長" = any NISA成長投資枠 section (株式 OR 投資信託)
 - "旧"   = 旧NISA預り
 - "積立" = つみたて投資枠
-Format: [{"n":"銘柄名","mv":評価額,"g":損益,"p":損益率,"c":"特定|成長|旧|積立"}]`
+Format: [{"n":"銘柄名","mv":評価額,"g":損益,"p":損益率,"c":"特定|成長|旧|積立"}]
+
+Output ALL items (cash + holdings) in one flat JSON array.`
     : scopeId === "bank"
     ? `Bank balance screen. Output one object per balance:
 Format: [{"n":"普通預金","mv":残高,"g":0,"p":0}]`
@@ -1222,7 +1231,7 @@ web検索で以下の一次情報を中心に調査してください：
   const hasRealestate = reTotal > 0;
   const totalGL = assetHoldings.reduce((s, h) => s + (h.gain_loss || 0), 0);
   const totalGLPct = totalValue - totalGL > 0 ? (totalGL / (totalValue - totalGL)) * 100 : 0;
-  const cashAssets = holdings.filter((h) => h.cat === "bank").reduce((s, h) => s + (h.market_value || 0), 0);
+  const cashAssets = holdings.filter((h) => h.cat === "bank" || h.cat === "cash_sbi").reduce((s, h) => s + (h.market_value || 0), 0);
   const investAssets = totalValue - cashAssets;
 
   // 米国株の取得円簿価を銘柄ごとに集計（買付の円受渡額を合算、売却は減算）
@@ -1423,7 +1432,7 @@ web検索で以下の一次情報を中心に調査してください：
                   <div style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums", marginTop: 2 }}>{fmt(investAssets)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10.5, color: C.dim, display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#64748B" }} />現金（銀行）</div>
+                  <div style={{ fontSize: 10.5, color: C.dim, display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#64748B" }} />現金（銀行・買付余力）</div>
                   <div style={{ fontSize: 17, fontWeight: 700, fontVariantNumeric: "tabular-nums", marginTop: 2 }}>{fmt(cashAssets)}</div>
                 </div>
                 {hasRealestate && (
