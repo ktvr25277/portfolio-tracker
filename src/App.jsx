@@ -311,7 +311,7 @@ async function gistCreate(token, payload) {
     method: "POST",
     headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
     body: JSON.stringify({
-      description: "Portfolio Tracker data (private)",
+      description: "Zenith data (private)",
       public: false, // Secret Gist
       files: { [GIST_FILENAME]: { content: JSON.stringify(payload) } },
     }),
@@ -560,7 +560,7 @@ function ApiKeySetup({ onSave }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 460, background: "rgba(20,27,45,0.9)", border: "1px solid #1E293B", borderRadius: 16, padding: 32 }}>
-        <div style={{ fontSize: 11, color: "#3B82F6", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Portfolio Tracker</div>
+        <div style={{ fontSize: 11, color: "#3B82F6", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Zenith</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", marginBottom: 8 }}>APIキーの設定</div>
         <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7, marginBottom: 24 }}>
           スクショ解析・株式探索・為替取得にAnthropicのAPIキーが必要です。キーはこのブラウザのみに保存され、外部には送信されません。
@@ -1376,7 +1376,7 @@ web検索で以下の一次情報を中心に調査してください：
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 3 }}>Portfolio Tracker</div>
+            <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 3 }}>Zenith</div>
             <div style={{ fontSize: 21, fontWeight: 700 }}>資産ダッシュボード</div>
           </div>
           <div style={{ textAlign: "right" }}>
