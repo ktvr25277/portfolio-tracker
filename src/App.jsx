@@ -649,23 +649,23 @@ function ApiKeySetup({ onSave }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 460, background: "rgba(20,27,45,0.9)", border: "1px solid #1E293B", borderRadius: 16, padding: 32 }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 460, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32 }}>
         <div style={{ fontSize: 11, color: "#3B82F6", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Zenith</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", marginBottom: 8 }}>APIキーの設定</div>
-        <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7, marginBottom: 24 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 8 }}>APIキーの設定</div>
+        <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 24 }}>
           スクショ解析・株式探索・為替取得にAnthropicのAPIキーが必要です。キーはこのブラウザのみに保存され、外部には送信されません。
         </div>
         <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>Anthropic APIキー</div>
         <input type="password" placeholder="sk-ant-api03-..." value={key} onChange={e => setKey(e.target.value)}
           onKeyDown={e => e.key === "Enter" && test()}
-          style={{ width: "100%", padding: "10px 12px", background: "#0F1626", border: "1px solid #1E293B", borderRadius: 8, color: "#F1F5F9", fontSize: 13, fontFamily: "monospace", boxSizing: "border-box", marginBottom: 8 }} />
+          style={{ width: "100%", padding: "10px 12px", background: C.surface2, border: "1px solid #1E293B", borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "monospace", boxSizing: "border-box", marginBottom: 8 }} />
         {err && <div style={{ fontSize: 12, color: "#F87171", marginBottom: 8 }}>⚠ {err}</div>}
         <button onClick={test} disabled={testing || !key.trim()} style={{
           width: "100%", padding: "11px", background: testing ? "#334155" : "#3B82F6", border: "none", borderRadius: 9,
           color: "#fff", fontSize: 14, fontWeight: 700, cursor: testing ? "default" : "pointer", fontFamily: "inherit", marginBottom: 20,
         }}>{testing ? "⟳ 接続確認中..." : "接続してアプリを開く"}</button>
-        <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.7, borderTop: "1px solid #1E293B", paddingTop: 16 }}>
+        <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.7, borderTop: "1px solid #1E293B", paddingTop: 16 }}>
           <strong style={{ color: "#64748B" }}>APIキーの取得方法</strong><br />
           1. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{ color: "#3B82F6" }}>console.anthropic.com</a> にGoogleアカウントでログイン<br />
           2. Settings → API Keys → 「Create Key」<br />
@@ -1453,21 +1453,52 @@ web検索で以下の一次情報を中心に調査してください：
   const hasRealized = realized.length > 0;
 
   const C = isDark ? {
-    bg: "#0A0E1A", surface: "rgba(20,27,45,0.9)", border: "#1E293B",
-    text: "#F1F5F9", muted: "#94A3B8", dim: "#475569",
-    accent: "#3B82F6", pos: "#10B981", neg: "#EF4444",
+    bg: "#0A0E1A",
+    surface: "#141B2D",
+    surface2: "#0F1626",
+    border: "#1E293B",
+    text: C.text,
+    muted: "#94A3B8",
+    dim: "#475569",
+    accent: "#3B82F6",
+    pos: "#10B981",
+    neg: "#EF4444",
+    tabBg: "#0F1626",
+    tabActive: "#1E3A5F",
+    inputBg: "#0F1626",
+    tooltipBg: "#0F1626",
+    cardInner: "#0F1626",
+    white: "#FFFFFF",
+    badge: "#334155",
   } : {
-    bg: "#F1F5F9", surface: "#FFFFFF", border: "#E2E8F0",
-    text: "#0F172A", muted: "#475569", dim: "#94A3B8",
-    accent: "#2563EB", pos: "#059669", neg: "#DC2626",
+    bg: "#F0F4F8",
+    surface: "#FFFFFF",
+    surface2: "#F8FAFC",
+    border: "#CBD5E1",
+    text: "#0F172A",
+    muted: "#374151",
+    dim: "#6B7280",
+    accent: "#2563EB",
+    pos: "#059669",
+    neg: "#DC2626",
+    tabBg: "#E2E8F0",
+    tabActive: "#BFDBFE",
+    inputBg: "#F8FAFC",
+    tooltipBg: "#1E293B",
+    cardInner: "#EFF6FF",
+    white: "#0F172A",
+    badge: "#E2E8F0",
   };
 
   const tabBtn = (id, label, icon) => (
     <button onClick={() => setTab(id)} style={{
       flex: 1, padding: "8px 3px", borderRadius: 7, border: "none", cursor: "pointer",
       fontSize: 10.5, fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap",
-      background: tab === id ? C.accent : "transparent", color: tab === id ? "#fff" : C.muted, transition: "all 0.15s",
-    }}>{icon} {label}</button>
+      background: tab === id ? C.accent : "transparent",
+      color: tab === id ? "#fff" : C.muted,
+      transition: "all 0.15s",
+      boxShadow: tab === id ? "0 1px 4px rgba(0,0,0,0.25)" : "none",
+    }}>{icon && icon + " "}{label}</button>
   );
 
   return (
@@ -1491,7 +1522,7 @@ web検索で以下の一次情報を中心に調査してください：
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, background: "#0F1626", padding: 4, borderRadius: 10, marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 4, background: C.surface2, padding: 4, borderRadius: 10, marginBottom: 12 }}>
           {tabBtn("dashboard", "ダッシュボード", "📊")}
           {tabBtn("holdings", "保有一覧", "📋")}
           {tabBtn("analysis", "分析", "🔍")}
@@ -1552,12 +1583,12 @@ web検索で以下の一次情報を中心に調査してください：
                 {totalValue > 0 && (
                   <div style={{ flex: 1, minWidth: 120, display: "flex", alignItems: "flex-end" }}>
                     <div style={{ width: "100%" }}>
-                      <div style={{ display: "flex", height: 8, borderRadius: 5, overflow: "hidden", background: "#0F1626" }}>
+                      <div style={{ display: "flex", height: 8, borderRadius: 5, overflow: "hidden", background: C.surface2 }}>
                         <div style={{ width: `${totalValue > 0 ? (investAssets / totalValue) * 100 : 0}%`, background: C.accent }} />
                         <div style={{ width: `${totalValue > 0 ? (cashAssets / totalValue) * 100 : 0}%`, background: "#64748B" }} />
                       </div>
                       {totalLoan > 0 && (
-                        <div style={{ marginTop: 4, height: 8, borderRadius: 5, overflow: "hidden", background: "#0F1626" }}>
+                        <div style={{ marginTop: 4, height: 8, borderRadius: 5, overflow: "hidden", background: C.surface2 }}>
                           <div style={{ width: `${totalValue > 0 ? Math.min(100, (totalLoan / totalValue) * 100) : 0}%`, height: "100%", background: "rgba(239,68,68,0.6)", borderRadius: 5 }} />
                         </div>
                       )}
@@ -1595,7 +1626,7 @@ web検索で以下の一次情報を中心に調査してください：
                         <Pie data={byCat} cx="50%" cy="50%" innerRadius={48} outerRadius={76} dataKey="value" paddingAngle={3}>
                           {byCat.map((e, i) => <Cell key={i} fill={e.color} />)}
                         </Pie>
-                        <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
+                        <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div style={{ marginTop: 8 }}>
@@ -1617,7 +1648,7 @@ web検索で以下の一次情報を中心に調査してください：
                     <LineChart data={history}>
                       <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 10, fill: C.dim }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 10, fill: C.dim }} tickLine={false} axisLine={false} tickFormatter={(v) => `¥${(v / 1e6).toFixed(1)}M`} width={48} />
-                      <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
                       <Line type="monotone" dataKey="total" stroke={C.accent} strokeWidth={2} dot={{ r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -1663,7 +1694,7 @@ web検索で以下の一次情報を中心に調査してください：
                 {/* 課税区分ごとの集計 */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                   {realizedByTax.map((t, i) => (
-                    <div key={i} style={{ flex: "1 1 90px", minWidth: 90, background: "#0F1626", borderRadius: 9, padding: "9px 11px" }}>
+                    <div key={i} style={{ flex: "1 1 90px", minWidth: 90, background: C.surface2, borderRadius: 9, padding: "9px 11px" }}>
                       <div style={{ fontSize: 10.5, color: C.dim, marginBottom: 2 }}>{t.tax}{(t.tax === "NISA成長" || t.tax === "NISA積立" || t.tax === "旧NISA") ? "（非課税）" : ""}</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: t.pl >= 0 ? C.pos : C.neg, fontVariantNumeric: "tabular-nums" }}>{fmtSign(t.pl)}</div>
                       <div style={{ fontSize: 9.5, color: C.dim, marginTop: 1 }}>{t.count}件</div>
@@ -1691,10 +1722,10 @@ web検索で以下の一次情報を中心に調査してください：
                     <tbody>
                       {realizedThisYear.map((r, i) => (
                         <tr key={i}>
-                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.bg}`, fontSize: 11.5, color: C.muted, whiteSpace: "nowrap" }}>{r.date.slice(5)}</td>
-                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.bg}`, fontSize: 12, fontWeight: 600, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</td>
-                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.bg}`, fontSize: 10.5, color: C.dim, textAlign: "right", whiteSpace: "nowrap" }}>{r.tax}</td>
-                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.bg}`, fontSize: 12, textAlign: "right", fontVariantNumeric: "tabular-nums", color: r.pl >= 0 ? C.pos : C.neg }}>{fmtSign(r.pl)}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}40`, fontSize: 11.5, color: C.muted, whiteSpace: "nowrap" }}>{r.date.slice(5)}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}40`, fontSize: 12, fontWeight: 600, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}40`, fontSize: 10.5, color: C.dim, textAlign: "right", whiteSpace: "nowrap" }}>{r.tax}</td>
+                          <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}40`, fontSize: 12, textAlign: "right", fontVariantNumeric: "tabular-nums", color: r.pl >= 0 ? C.pos : C.neg }}>{fmtSign(r.pl)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1714,7 +1745,7 @@ web検索で以下の一次情報を中心に調査してください：
                     <div key={ci}>
                       <div style={{ fontSize: 11, color: col.c, marginBottom: 8 }}>{col.label}</div>
                       {col.list.length ? col.list.map((h, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.bg}`, fontSize: 12 }}>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${C.border}40`, fontSize: 12 }}>
                           <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "52%" }}>{h.name}</span>
                           <span style={{ color: h.gain_loss >= 0 ? C.pos : C.neg, fontVariantNumeric: "tabular-nums", textAlign: "right", fontSize: 11 }}>{fmtSign(h.gain_loss)}<br /><span style={{ fontSize: 10 }}>{fmtPct(h.gain_loss_pct)}</span></span>
                         </div>
@@ -1805,7 +1836,7 @@ web検索で以下の一次情報を中心に調査してください：
                           return 0;
                         }).map((h, i) => (
                           <tr key={i}>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 200, cursor: "pointer" }}
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.border}40`, fontSize: 12.5, fontWeight: 600, maxWidth: 200, cursor: "pointer" }}
                               onClick={() => setChartModal({ name: h.name, code: h.code, market: cat.id === "us" ? "us" : cat.id === "crypto" ? "crypto" : "jp" })}>
                               <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {h.name}
@@ -1815,7 +1846,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 {h.currency && <span style={{ fontSize: 9.5, fontWeight: 600, color: cat.color, border: `1px solid ${cat.color}66`, borderRadius: 3, padding: "1px 4px" }}>{h.currency}</span>}
                               </div>
                             </td>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.border}40`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
                               {fmt(h.market_value)}
                               {h.local_value != null && h.currency && (
                                 <div style={{ fontSize: 9.5, color: C.dim }}>{h.currency} {h.local_value.toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>
@@ -1824,7 +1855,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 <div style={{ fontSize: 9.5, color: C.dim }}>{h.qty.toLocaleString("en-US", { maximumFractionDigits: 8 })} {h.name}</div>
                               )}
                             </td>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.border}40`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
                               {(() => {
                                 if (cat.id !== "us") {
                                   return <span style={{ color: (h.gain_loss || 0) >= 0 ? C.pos : C.neg }}>{fmtSign(h.gain_loss)}</span>;
@@ -1847,7 +1878,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 );
                               })()}
                             </td>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, color: (h.gain_loss_pct || 0) >= 0 ? C.pos : C.neg }}>{fmtPct(h.gain_loss_pct)}</td>
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.border}40`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, color: (h.gain_loss_pct || 0) >= 0 ? C.pos : C.neg }}>{fmtPct(h.gain_loss_pct)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1934,7 +1965,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 {/* 指数バー */}
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>指数</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: isDark ? "#1a2237" : "#D1D5DB", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mkt) * 1.5)}%`, background: C.dim }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: C.muted, minWidth: 50, textAlign: "right" }}>{mkt >= 0 ? "+" : ""}{mkt.toFixed(1)}%</span>
@@ -1942,7 +1973,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 {mine && mine.ret != null ? (
                                   <div style={{ display: "flex", gap: 6, fontSize: 10.5, marginTop: 3, alignItems: "center" }}>
                                     <span style={{ color: C.dim, width: 44 }}>保有</span>
-                                    <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                    <div style={{ flex: 1, height: 11, background: isDark ? "#1a2237" : "#D1D5DB", borderRadius: 3, overflow: "hidden" }}>
                                       <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mine.ret) * 1.5)}%`, background: mine.ret >= 0 ? C.pos : C.neg }} />
                                     </div>
                                     <span style={{ fontVariantNumeric: "tabular-nums", color: mine.ret >= 0 ? C.pos : C.neg, minWidth: 50, textAlign: "right" }}>{mine.ret >= 0 ? "+" : ""}{mine.ret.toFixed(1)}%</span>
@@ -1972,14 +2003,14 @@ web検索で以下の一次情報を中心に調査してください：
                                 </div>
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>指数</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: isDark ? "#1a2237" : "#D1D5DB", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mkt))}%`, background: C.dim }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: C.muted, minWidth: 50, textAlign: "right" }}>{mkt >= 0 ? "+" : ""}{mkt.toFixed(1)}%</span>
                                 </div>
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, marginTop: 3, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>保有</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: isDark ? "#1a2237" : "#D1D5DB", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(g.ret))}%`, background: g.ret >= 0 ? C.pos : C.neg }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: g.ret >= 0 ? C.pos : C.neg, minWidth: 50, textAlign: "right" }}>{g.ret >= 0 ? "+" : ""}{g.ret.toFixed(1)}%</span>
@@ -2025,7 +2056,7 @@ web検索で以下の一次情報を中心に調査してください：
                           <div key={ci}>
                             <div style={{ fontSize: 11, color: col.c, marginBottom: 8 }}>{col.label}</div>
                             {col.list.length ? col.list.map((h, i) => (
-                              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: `1px solid ${C.bg}`, fontSize: 11.5 }}>
+                              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: `1px solid ${C.border}40`, fontSize: 11.5 }}>
                                 <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "50%" }}>{h.name}</span>
                                 <span style={{ fontVariantNumeric: "tabular-nums", color: col.c, textAlign: "right" }}>
                                   {fmtSign(h.gain_loss)}<br /><span style={{ fontSize: 9.5, color: C.dim }}>{h.ret >= 0 ? "+" : ""}{h.ret?.toFixed(0)}%</span>
@@ -2070,7 +2101,7 @@ web検索で以下の一次情報を中心に調査してください：
                 </button>
               </div>
               <textarea value={stockQuery} onChange={(e) => setStockQuery(e.target.value)}
-                rows={8} style={{ width: "100%", padding: "10px 12px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", lineHeight: 1.7 }} />
+                rows={8} style={{ width: "100%", padding: "10px 12px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", lineHeight: 1.7 }} />
               <div style={{ fontSize: 10, color: C.dim, marginTop: 6 }}>
                 ⚠ 本機能はAIによる調査・推定です。一次情報の正確性は必ずご自身でご確認ください。投資判断は自己責任でお願いします。
               </div>
@@ -2128,7 +2159,7 @@ web検索で以下の一次情報を中心に調査してください：
                     {scores.map((sc, j) => (
                       <div key={j} style={{ flex: "1 1 80px", minWidth: 70 }}>
                         <div style={{ fontSize: 9.5, color: C.dim, marginBottom: 3 }}>{sc.label}</div>
-                        <div style={{ height: 5, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{ height: 5, background: isDark ? "#1a2237" : "#D1D5DB", borderRadius: 3, overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${((sc.val || 0) / sc.max) * 100}%`, background: sc.color, borderRadius: 3 }} />
                         </div>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: sc.color, marginTop: 2, textAlign: "right" }}>{sc.val}/{sc.max}</div>
@@ -2137,7 +2168,7 @@ web検索で以下の一次情報を中心に調査してください：
                   </div>
 
                   {/* 投資妙味コメント（常時表示） */}
-                  <div style={{ padding: "9px 12px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 8, fontSize: 12, color: C.text, marginBottom: 10, lineHeight: 1.6 }}>
+                  <div style={{ padding: "9px 12px", background: isDark ? "rgba(59,130,246,0.07)" : "rgba(59,130,246,0.06)", border: `1px solid rgba(59,130,246,0.2)`, borderRadius: 8, fontSize: 12, color: C.text, marginBottom: 10, lineHeight: 1.6 }}>
                     💡 {s.comment}
                   </div>
 
@@ -2200,7 +2231,7 @@ web検索で以下の一次情報を中心に調査してください：
                       placeholder={placeholder}
                       value={realestate[key]}
                       onChange={(e) => setRealestate((prev) => ({ ...prev, [key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 12px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "9px 12px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
                     />
                     {hint && <div style={{ fontSize: 10.5, color: C.dim, marginTop: 4 }}>{hint}</div>}
                   </div>
@@ -2217,7 +2248,7 @@ web検索で以下の一次情報を中心に調査してください：
                     { label: "土地評価額", value: reLand, sub: "手入力値", color: C.text },
                     { label: `建物評価額（築${reAge}年・残存${(reDepRate * 100).toFixed(0)}%）`, value: reBuildValue, sub: `${fmt(reBuildCost)} × ${(reDepRate * 100).toFixed(0)}%`, color: C.text },
                   ].map((row, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.bg}`, fontSize: 13 }}>
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.border}40`, fontSize: 13 }}>
                       <span style={{ color: C.muted }}>{row.label}</span>
                       <span style={{ textAlign: "right" }}>
                         <div style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", color: row.color }}>{fmt(row.value)}</div>
@@ -2273,7 +2304,7 @@ web検索で以下の一次情報を中心に調査してください：
               <input
                 type="number" inputMode="decimal" placeholder="例: 152.3" value={manualUsdJpy}
                 onChange={(e) => setManualUsdJpy(e.target.value)}
-                style={{ width: 90, padding: "5px 8px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "inherit" }}
+                style={{ width: 90, padding: "5px 8px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "inherit" }}
               />
               {manualUsdJpy && <span style={{ color: C.accent }}>このレートを優先します</span>}
             </div>
@@ -2294,7 +2325,7 @@ web検索で以下の一次情報を中心に調査してください：
             <div style={{ marginTop: 22, padding: 15, background: "rgba(245,158,11,0.09)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 12, fontSize: 12, color: C.text, lineHeight: 1.7, fontWeight: 600 }}>
               ⚠️ スクショは<u>すべての銘柄が1枚に収まるように</u>撮ってください。<span style={{ fontWeight: 400, color: C.muted }}>取込はその口座を毎回まるごと上書きするため、2枚に分けると後の1枚で前の銘柄が消えます。銘柄が多くて入りきらない場合は、ブラウザの表示を縮小（ズームアウト）してから撮影するか、ご相談ください。</span>
             </div>
-            <div style={{ marginTop: 14, padding: 15, background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 12, fontSize: 12, color: C.muted, lineHeight: 1.85 }}>
+            <div style={{ marginTop: 14, padding: 15, background: isDark ? "rgba(59,130,246,0.07)" : "rgba(59,130,246,0.06)", border: `1px solid rgba(59,130,246,0.2)`, borderRadius: 12, fontSize: 12, color: C.muted, lineHeight: 1.85 }}>
               💡 <strong style={{ color: C.text }}>使い方のヒント</strong><br />
               SBI国内：口座管理 → 保有証券(ポートフォリオ全体)を1枚でスクショ<br />
               SBI海外：外国株式の保有画面を1枚でスクショ<br />
@@ -2314,10 +2345,10 @@ web検索で以下の一次情報を中心に調査してください：
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input ref={tokenInputRef} type="password" placeholder="GitHubトークン（gist権限）" value={gistToken}
                   onChange={(e) => setGistToken(e.target.value)}
-                  style={{ padding: "8px 10px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
+                  style={{ padding: "8px 10px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
                 <input ref={idInputRef} type="text" placeholder="Gist ID（2台目以降に入力。1台目は空でOK）" value={gistId}
                   onChange={(e) => setGistId(e.target.value)}
-                  style={{ padding: "8px 10px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
+                  style={{ padding: "8px 10px", background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <button onClick={connectGist} disabled={gistBusy} style={{ padding: "7px 16px", background: gistBusy ? C.border : C.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: gistBusy ? "default" : "pointer", fontFamily: "inherit" }}>
                     {gistBusy ? "⟳ 処理中..." : (gistId.trim() ? "🔗 接続して読込" : "✨ 新規作成して接続")}
@@ -2350,7 +2381,7 @@ web検索で以下の一次情報を中心に調査してください：
                 <div style={{ marginTop: 12 }}>
                   <textarea value={backupText} onChange={(e) => setBackupText(e.target.value)}
                     placeholder="ここにバックアップ文字列を貼り付けて「この内容を反映」を押してください"
-                    style={{ width: "100%", height: 90, padding: 10, background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box" }} />
+                    style={{ width: "100%", height: 90, padding: 10, background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box" }} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
                     <button onClick={() => { navigator.clipboard?.writeText(backupText); }} style={{ padding: "6px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, color: C.muted, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}>📋 コピー</button>
                     <button onClick={importBackup} style={{ padding: "6px 12px", background: C.accent, border: "none", borderRadius: 7, color: "#fff", fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}>この内容を反映</button>
@@ -2453,7 +2484,7 @@ function NisaGauge({ label, used, limit, color, C }) {
           {fmt(used)} / {fmt(limit)}
         </span>
       </div>
-      <div style={{ height: 9, background: "#0F1626", borderRadius: 5, overflow: "hidden" }}>
+      <div style={{ height: 9, background: C.surface2, borderRadius: 5, overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: over ? C.neg : color, borderRadius: 5, transition: "width 0.4s" }} />
       </div>
       <div style={{ fontSize: 11, marginTop: 4, color: over ? C.neg : C.muted, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
