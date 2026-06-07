@@ -122,14 +122,14 @@ FORMAT B - ポートフォリオ画面: Each row shows 日本語名 with USD bad
 
 For FORMAT A:
 - "cd" = ticker in CAPS at start of name line (e.g. "JD", "KO", "MU", "AMZN"). CRITICAL: always extract.
-- "n" = Japanese name after ticker (e.g. "JDドットコム ADR"). Do NOT include ticker in n.
+- "n" = Japanese name after ticker, copied EXACTLY as shown on screen (e.g. "JDドットコム ADR", "コカ・コーラ", "Direxion デイリーS&P500ブル3倍 ETF"). Do NOT shorten, abbreviate or paraphrase. Do NOT include ticker in n.
 - "mv" = 保有数量 × 現在値 (local currency value).
 - "g" = 外貨建評価損益 (the +/- number in local currency).
 - "jpy" = null (no yen total shown).
 
 For FORMAT B:
 - "cd" = if ticker shown before Japanese name, extract it; otherwise null.
-- "n" = Japanese name shown (e.g. "マイクロンテクノロジー", "テスラ").
+- "n" = Japanese name shown on screen, copied EXACTLY (e.g. "マイクロンテクノロジー", "テスラ", "グローバルX データセンター＆インフラ ETF"). Do NOT shorten or abbreviate.
 - "mv" = USD現在値 shown below ¥ amount (e.g. "USD 864.01" → 864.01).
 - "g" = USD損益 (e.g. "+$125 USD" → 125, "-$198 USD" → -198).
 - "jpy" = ¥円評価額 shown (e.g. "¥138,518" → 138518). CRITICAL: extract this.
