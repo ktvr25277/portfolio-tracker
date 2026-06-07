@@ -1303,53 +1303,34 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をClaude API + web_searchで取得
+  // 前日比をYahoo Finance経由で取得（CORSプロキシ使用）
   const fetchDailyChange = useCallback(async () => {
     const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
     if (!targets.length) return;
     setDailyLoading(true);
-    try {
-      const jpCodes = targets.filter(h => h.cat !== 'us').map(h => h.code).filter(Boolean);
-      const usCodes = targets.filter(h => h.cat === 'us').map(h => h.code).filter(Boolean);
-      const allCodes = [...jpCodes.map(c => c + '.T'), ...usCodes];
-      if (!allCodes.length) { setDailyLoading(false); return; }
-
-      const prompt = `Get today's stock price changes for: ${allCodes.join(', ')}.
-Return ONLY a JSON array, no markdown:
-[{"symbol":"7550.T","change":-30,"changePct":-0.5},{"symbol":"AMZN","change":5.2,"changePct":0.3}]
-Use the most recent trading day vs previous close. symbol must match input exactly.`;
-
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': window._portfolioApiKey || localStorage.getItem('anthropic_api_key') || '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-      const data = await resp.json();
-      const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-      const match = text.match(/\[[\s\S]*\]/);
-      if (match) {
-        const arr = JSON.parse(match[0]);
-        const result = {};
-        for (const item of arr) {
-          // シンボルからコードを逆引き
-          const code = item.symbol.replace('.T', '');
-          result[code] = { change: item.change, changePct: item.changePct };
+    const result = {};
+    await Promise.allSettled(targets.map(async h => {
+      try {
+        const symbol = h.cat === 'us' ? h.code : `${h.code}.T`;
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+        const r = await fetch(proxyUrl);
+        if (!r.ok) return;
+        const wrapper = await r.json();
+        const d = JSON.parse(wrapper.contents);
+        const quotes = d?.chart?.result?.[0]?.indicators?.quote?.[0];
+        const closes = quotes?.close?.filter(v => v != null);
+        if (closes && closes.length >= 2) {
+          const prev = closes[closes.length - 2];
+          const cur = closes[closes.length - 1];
+          result[h.code] = {
+            change: Math.round((cur - prev) * 100) / 100,
+            changePct: Math.round((cur - prev) / prev * 10000) / 100,
+          };
         }
-        setDailyChange(result);
-      }
-    } catch(e) {
-      console.error('前日比取得エラー:', e);
-    }
+      } catch {}
+    }));
+    setDailyChange(result);
     setDailyLoading(false);
   }, [holdingsRaw]);
 
