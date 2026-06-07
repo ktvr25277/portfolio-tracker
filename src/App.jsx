@@ -1476,7 +1476,12 @@ web検索で以下の一次情報を中心に調査してください：
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 3 }}>Zenith</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+              <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase" }}>Zenith</div>
+              <button onClick={toggleTheme} title={isDark ? "ライトモードに切替" : "ダークモードに切替"} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 20, padding: "2px 9px", cursor: "pointer", fontSize: 13, color: C.muted, lineHeight: 1.4 }}>
+                {isDark ? "☀️" : "🌙"}
+              </button>
+            </div>
             <div style={{ fontSize: 21, fontWeight: 700 }}>資産ダッシュボード</div>
           </div>
           <div style={{ textAlign: "right" }}>
