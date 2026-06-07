@@ -115,19 +115,31 @@ Output ALL items (cash + holdings) in one flat JSON array.`
     ? `Bank balance screen. Output one object per balance:
 Format: [{"n":"普通預金","mv":残高,"g":0,"p":0}]`
     : scopeId === "sbi_us"
-    ? `This is SBI Securities foreign stock holdings screen (口座サマリー外貨建商品 or similar).
+    ? `This is an SBI Securities foreign stock holdings screen. Two possible formats:
 
-Each holding row shows: [TICKER 日本語名] on one line, then quantity/price/value on the next.
-- "cd" = ticker symbol shown in CAPS before the Japanese name (e.g. "JD", "KO", "MU", "AMZN", "SPXL"). CRITICAL: always extract this.
-- "n" = Japanese name that follows the ticker (e.g. "JDドットコム ADR", "コカ・コーラ", "アマゾンドットコム"). Do NOT include the ticker in "n".
-- "cur" = currency. Default "USD" unless screen shows otherwise (HKD, EUR etc.).
-- "mv" = 保有数量 × 現在値 (local currency). If shown directly use it.
-- "g" = 外貨建評価損益 in local currency (the colored +/- number shown).
-- "p" = g ÷ (mv - g) × 100, rounded to 2 decimals.
-- "jpy" = 円換算評価額 if explicitly shown, else null.
-- "cat" = classify by section header: "us" for 特定預り, "nisa_us" for NISA預り, "old_nisa_us" for 旧NISA預り.
+FORMAT A - 口座サマリー（外貨建商品）: Each row shows [TICKER 日本語名] then quantity/取得単価/現在値/外貨建評価損益.
+FORMAT B - ポートフォリオ画面: Each row shows 日本語名 with USD badge, then 円評価額(¥xxx) and USD現在値, 含み損益(+$xx USD / +¥xx円).
 
-Format: [{"n":"日本語名","cd":"TICKER","cur":"USD","mv":現地評価額,"g":現地損益,"p":損益率,"jpy":null}]
+For FORMAT A:
+- "cd" = ticker in CAPS at start of name line (e.g. "JD", "KO", "MU", "AMZN"). CRITICAL: always extract.
+- "n" = Japanese name after ticker (e.g. "JDドットコム ADR"). Do NOT include ticker in n.
+- "mv" = 保有数量 × 現在値 (local currency value).
+- "g" = 外貨建評価損益 (the +/- number in local currency).
+- "jpy" = null (no yen total shown).
+
+For FORMAT B:
+- "cd" = if ticker shown before Japanese name, extract it; otherwise null.
+- "n" = Japanese name shown (e.g. "マイクロンテクノロジー", "テスラ").
+- "mv" = USD現在値 shown below ¥ amount (e.g. "USD 864.01" → 864.01).
+- "g" = USD損益 (e.g. "+$125 USD" → 125, "-$198 USD" → -198).
+- "jpy" = ¥円評価額 shown (e.g. "¥138,518" → 138518). CRITICAL: extract this.
+- "p" = 損益率% shown (e.g. "+16.97%" → 16.97).
+
+Common fields:
+- "cur" = "USD" (default) unless screen shows HKD/EUR etc.
+- "p" = gain/loss percentage shown, or calculate from g and mv.
+
+Format: [{"n":"日本語名","cd":"TICKERornull","cur":"USD","mv":現地単価or評価額,"g":現地損益,"p":損益率,"jpy":円評価額ornull}]
 Output flat JSON array only, no markdown.`
     : scopeId === "coincheck"
     ? `This is a Coincheck cryptocurrency holdings screen (Japanese, values in JPY).
@@ -887,10 +899,11 @@ export default function App() {
           const rate = (manualValid && cur === "USD") ? manual : (cur === "JPY" ? 1 : rates[cur]);
           // 円換算: 評価額は画面の円表示があれば優先、無ければ為替換算
           const mvJpy = h.jpy_shown != null ? h.jpy_shown : (rate ? h.market_value * rate : null);
-          // 含み損益は現地通貨建てなので為替換算（円表示はSBIの海外株一覧には通常損益の円表示がないため）
+          // 含み損益は現地通貨建てなので為替換算
           const glJpy = (h.gain_loss != null && rate) ? h.gain_loss * rate : null;
           return {
             name: h.name,
+            code: h.code || null,
             market_value: mvJpy != null ? Math.round(mvJpy) : null,
             gain_loss: glJpy != null ? Math.round(glJpy) : null,
             gain_loss_pct: h.gain_loss_pct,
