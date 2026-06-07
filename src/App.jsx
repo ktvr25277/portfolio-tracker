@@ -1976,6 +1976,7 @@ web検索で以下の一次情報を中心に調査してください：
                         <tr>{[
                           { l: "銘柄", k: null },
                           { l: dailyLoading ? "前日比 ⟳" : "前日比", k: "dc" },
+                          { l: "含み損益", k: "gl" },
                           { l: "評価額", k: "mv" },
                         ].map(({ l, k }, i) => (
                           <th key={i} onClick={() => k && k !== "dc" && setHoldingSort(holdingSort === k ? null : k)} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k && holdingSort === k ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k && k !== "dc" ? "pointer" : "default", userSelect: "none" }}>
@@ -2020,6 +2021,32 @@ web検索で以下の一次情報を中心に調査してください：
                               ) : (
                                 <span style={{ color: C.dim, fontSize: 11 }}>{dailyLoading ? "⟳" : "―"}</span>
                               )}
+                            </td>
+                            {/* 含み損益 */}
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
+                              {(() => {
+                                if (cat.id !== "us") {
+                                  return (
+                                    <span style={{ color: (h.gain_loss || 0) >= 0 ? C.pos : C.neg }}>
+                                      {fmtSign(h.gain_loss)}
+                                      <div style={{ fontSize: 10, color: (h.gain_loss_pct || 0) >= 0 ? C.pos : C.neg }}>{fmtPct(h.gain_loss_pct)}</div>
+                                    </span>
+                                  );
+                                }
+                                const usdGl = h.local_gain_loss;
+                                const cost = matchUsCost(h);
+                                const jpyGl = (cost && cost.jpy > 0 && h.market_value != null) ? Math.round(h.market_value - cost.jpy) : null;
+                                return (
+                                  <div>
+                                    <div style={{ color: (usdGl || 0) >= 0 ? C.pos : C.neg, fontSize: 11 }}>
+                                      {usdGl != null ? `${usdGl >= 0 ? "+" : "-"}$${Math.abs(usdGl).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "―"}
+                                    </div>
+                                    <div style={{ color: jpyGl == null ? C.dim : (jpyGl >= 0 ? C.pos : C.neg), fontSize: 10 }}>
+                                      {jpyGl != null ? fmtSign(jpyGl) : "円建—"}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             {/* 評価額（右端） */}
                             <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
