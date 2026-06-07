@@ -536,20 +536,20 @@ function PerfScatter({ holdings, fmt, fmtSign }) {
       <line x1={zeroX} y1={padT} x2={zeroX} y2={H - padB} stroke="var(--dim)" strokeWidth={1.5} strokeDasharray="6 5" />
       <line x1={padL} y1={zeroY} x2={W - padR} y2={zeroY} stroke="var(--dim)" strokeWidth={1.5} strokeDasharray="6 5" />
       {/* 軸ラベル */}
-      <text x={(padL + W - padR) / 2} y={H - 12} fill="#64748B" fontSize={17} textAnchor="middle">リターン →</text>
-      <text x={zeroX} y={H - padB + 24} fill="#64748B" fontSize={15} textAnchor="middle">0%</text>
-      <text x={W - padR} y={H - padB + 24} fill="#64748B" fontSize={15} textAnchor="end">+{maxR.toFixed(0)}%</text>
-      <text x={padL} y={H - padB + 24} fill="#64748B" fontSize={15} textAnchor="start">{minR.toFixed(0)}%</text>
+      <text x={(padL + W - padR) / 2} y={H - 12} fill="var(--dim)" fontSize={17} textAnchor="middle">リターン →</text>
+      <text x={zeroX} y={H - padB + 24} fill="var(--dim)" fontSize={15} textAnchor="middle">0%</text>
+      <text x={W - padR} y={H - padB + 24} fill="var(--dim)" fontSize={15} textAnchor="end">+{maxR.toFixed(0)}%</text>
+      <text x={padL} y={H - padB + 24} fill="var(--dim)" fontSize={15} textAnchor="start">{minR.toFixed(0)}%</text>
       {yTicks.map((g, i) => (
-        <text key={i} x={padL - 10} y={yOf(g) + 5} fill="#64748B" fontSize={14} textAnchor="end">{fmtSign(g)}</text>
+        <text key={i} x={padL - 10} y={yOf(g) + 5} fill="var(--dim)" fontSize={14} textAnchor="end">{fmtSign(g)}</text>
       ))}
-      <text x={22} y={(padT + H - padB) / 2} fill="#64748B" fontSize={15} textAnchor="middle" transform={`rotate(-90 22 ${(padT + H - padB) / 2})`}>損益額 ↑</text>
+      <text x={22} y={(padT + H - padB) / 2} fill="var(--dim)" fontSize={15} textAnchor="middle" transform={`rotate(-90 22 ${(padT + H - padB) / 2})`}>損益額 ↑</text>
       {placed.map((p, i) => (
         <g key={i}>
           <circle cx={p.cx} cy={p.cy} r={p.r} fill={p.gain_loss >= 0 ? "rgba(16,185,129,0.26)" : "rgba(248,113,113,0.24)"}
             stroke={p.gain_loss >= 0 ? "#10B981" : "#F87171"} strokeWidth={2} />
           {p.r > 22 && (
-            <text x={p.cx} y={p.cy + 5} fill="#fff" fontSize={15} fontWeight="700" textAnchor="middle" style={{ pointerEvents: "none" }}>
+            <text x={p.cx} y={p.cy + 5} fill="var(--text)" fontSize={15} fontWeight="700" textAnchor="middle" style={{ pointerEvents: "none" }}>
               {p.name.length > 6 ? p.name.slice(0, 6) : p.name}
             </text>
           )}
