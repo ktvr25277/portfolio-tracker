@@ -99,7 +99,7 @@ SECTION 1 — Cash (left panel). If you see 「買付余力」or「現金残高�
 - Output as: {"n":"買付余力","mv":金額,"g":0,"p":0,"c":"cash"}
 
 SECTION 2 — Stock/fund holdings (right panel). Each row shows: [4-digit code] [銘柄名] in the left column of the table.
-CRITICAL: Extract the 4-digit NUMERIC code that appears BEFORE the stock name on each row (e.g. "2521 上場米国ヘッジあり" → cd="2521"). The code is ALWAYS exactly 4 Arabic numerals (0-9). If you see letters like Q, O, I, l mixed in (e.g. "Q661", "4O61"), re-read carefully — they are digits: Q→0, O→0, I→1, l→1. If genuinely no 4-digit number is visible, set cd=null.
+CRITICAL: Extract the code that appears BEFORE the stock name on each row (e.g. "2521 上場米国ヘッジあり" → cd="2521", "200A 日経半導体株ETF" → cd="200A"). Codes are 4 characters: usually all digits, but may end in a letter (e.g. "200A", "1570"). Common misreads to correct: Q→0, O→0, I→1, l→1 (only when surrounded by digits). If no code is visible, set cd=null.
 
 Add "c" to classify which section header the holding appears under:
 - "特定" = 株式(現物/特定預り)
@@ -192,7 +192,7 @@ Format: [{"n":"住宅ローン","mv":残高,"g":0,"p":0}]`
       if (o.n != null && o.mv != null) {
         holdings.push({
           name: String(o.n),
-          code: o.cd ? (String(o.cd).match(/^\d{4}$/) ? String(o.cd) : null) : null,
+          code: o.cd ? (String(o.cd).match(/^[0-9A-Z]{1,5}$/) ? String(o.cd) : null) : null,
           market_value: Number(o.mv),
           gain_loss: o.g != null ? Number(o.g) : null,
           gain_loss_pct: o.p != null ? Number(o.p) : null,
