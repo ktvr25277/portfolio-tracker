@@ -626,7 +626,11 @@ Names: ${JSON.stringify(names)}`;
 // ─── 取込プレビューモーダル ───────────────────────────────
 function ImportPreviewModal({ preview, onConfirm, onCancel, C }) {
   const [rows, setRows] = React.useState([]);
-  React.useEffect(() => { if (preview) setRows(preview.rows.map(r => ({...r}))); }, [preview]);
+  React.useEffect(() => {
+    if (preview) setRows(preview.rows.map(r => ({...r})));
+    else setRows([]);
+  }, [preview]);
+  // Hooksより後でnullチェック
   if (!preview) return null;
 
   const fmt = (v) => v == null ? "—" : Number(v).toLocaleString();
