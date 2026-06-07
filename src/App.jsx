@@ -1303,34 +1303,53 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をYahoo Finance APIから取得
+  // 前日比をClaude API + web_searchで取得
   const fetchDailyChange = useCallback(async () => {
     const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
     if (!targets.length) return;
     setDailyLoading(true);
-    const result = {};
-    await Promise.allSettled(targets.map(async h => {
-      try {
-        const symbol = h.cat === 'us' ? h.code : `${h.code}.T`;
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
-        const r = await fetch(url);
-        if (!r.ok) return;
-        const d = await r.json();
-        const quotes = d?.chart?.result?.[0]?.indicators?.quote?.[0];
-        const closes = quotes?.close;
-        if (closes && closes.length >= 2) {
-          const prev = closes[closes.length - 2];
-          const cur = closes[closes.length - 1];
-          if (prev && cur) {
-            result[h.code] = {
-              change: Math.round((cur - prev) * 100) / 100,
-              changePct: Math.round((cur - prev) / prev * 10000) / 100,
-            };
-          }
+    try {
+      const jpCodes = targets.filter(h => h.cat !== 'us').map(h => h.code).filter(Boolean);
+      const usCodes = targets.filter(h => h.cat === 'us').map(h => h.code).filter(Boolean);
+      const allCodes = [...jpCodes.map(c => c + '.T'), ...usCodes];
+      if (!allCodes.length) { setDailyLoading(false); return; }
+
+      const prompt = `Get today's stock price changes for: ${allCodes.join(', ')}.
+Return ONLY a JSON array, no markdown:
+[{"symbol":"7550.T","change":-30,"changePct":-0.5},{"symbol":"AMZN","change":5.2,"changePct":0.3}]
+Use the most recent trading day vs previous close. symbol must match input exactly.`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': window._portfolioApiKey || localStorage.getItem('anthropic_api_key') || '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await resp.json();
+      const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+      const match = text.match(/\[[\s\S]*\]/);
+      if (match) {
+        const arr = JSON.parse(match[0]);
+        const result = {};
+        for (const item of arr) {
+          // シンボルからコードを逆引き
+          const code = item.symbol.replace('.T', '');
+          result[code] = { change: item.change, changePct: item.changePct };
         }
-      } catch {}
-    }));
-    setDailyChange(result);
+        setDailyChange(result);
+      }
+    } catch(e) {
+      console.error('前日比取得エラー:', e);
+    }
     setDailyLoading(false);
   }, [holdingsRaw]);
 
@@ -1436,10 +1455,10 @@ web検索で以下の一次情報を中心に調査してください：
 
   // 保有一覧タブを開いた時に前日比を自動取得
   useEffect(() => {
-    if (tab === 'holdings' && holdingsRaw.length > 0 && Object.keys(dailyChange).length === 0) {
+    if (tab === 'holdings' && holdingsRaw.length > 0) {
       fetchDailyChange();
     }
-  }, [tab, holdingsRaw.length]);
+  }, [tab]);
 
   // 暗号資産: 通貨ごとの取得額（円）・数量を購入履歴から積み上げ
   const cryptoCostByCoin = (() => {
@@ -1652,7 +1671,18 @@ web検索で以下の一次情報を中心に調査してください：
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+    <div
+      style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}
+      onTouchStart={e => { window._swipeX = e.touches[0].clientX; }}
+      onTouchEnd={e => {
+        const dx = e.changedTouches[0].clientX - (window._swipeX || 0);
+        if (Math.abs(dx) < 60) return;
+        const tabs = ['dashboard','holdings','analysis','realestate','stock','upload'];
+        const idx = tabs.indexOf(tab);
+        if (dx < 0 && idx < tabs.length - 1) setTab(tabs[idx + 1]);
+        if (dx > 0 && idx > 0) setTab(tabs[idx - 1]);
+      }}
+    >
 
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "20px 16px 48px" }}>
 
@@ -1975,11 +2005,11 @@ web検索で以下の一次情報を中心に調査してください：
                       <thead>
                         <tr>{[
                           { l: "銘柄", k: null },
-                          { l: dailyLoading ? "前日比 ⟳" : "前日比", k: "dc" },
+                          { l: dailyLoading ? "前日比 ⟳" : "前日比 🔄", k: "dc", onClick: fetchDailyChange },
                           { l: "含み損益", k: "gl" },
                           { l: "評価額", k: "mv" },
                         ].map(({ l, k }, i) => (
-                          <th key={i} onClick={() => k && k !== "dc" && setHoldingSort(holdingSort === k ? null : k)} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k && holdingSort === k ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k && k !== "dc" ? "pointer" : "default", userSelect: "none" }}>
+                          <th key={i} onClick={() => { if (k === "dc") fetchDailyChange(); else if (k) setHoldingSort(holdingSort === k ? null : k); }} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k === "dc" || (k && holdingSort === k) ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k ? "pointer" : "default", userSelect: "none" }}>
                             {l}{k && k !== "dc" && holdingSort === k ? " ▼" : k && k !== "dc" ? " ↕" : ""}
                           </th>
                         ))}</tr>
