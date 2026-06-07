@@ -34,7 +34,7 @@
       [data-theme="light"] {
         --bg: #F0F4F8;
         --surface: #FFFFFF;
-        --surface2: #EEF2FF;
+        --surface2: #E8EEFF;
         --border: #6B7280;
         --text: #0F172A;
         --muted: #374151;
@@ -50,7 +50,7 @@
         --card-border-width: 1.5px;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text); }
+      body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
       /* ライトモード: tableの縞模様など */
       [data-theme="light"] input,
       [data-theme="light"] textarea,
@@ -68,10 +68,7 @@
       [data-theme="light"] th, [data-theme="light"] td {
         border-bottom: 1px solid var(--border) !important;
       }
-      /* スムーズなテーマ切替 */
-      *, *::before, *::after {
-        transition: background-color 0.2s, border-color 0.2s, color 0.1s;
-      }
+      /* テーマ切替はCSS変数の更新のみ（transitionは不要・誤動作の原因になる） */
     </style>
     <script>
       (function() {
