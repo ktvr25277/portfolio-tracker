@@ -1339,10 +1339,22 @@ web検索で以下の一次情報を中心に調査してください：
   // 保有米国株に円建て損益を付与（取引履歴で円簿価が分かるものだけ）
   const matchUsCost = (h) => {
     if (h.cat !== "us") return null;
-    // 銘柄名・ティッカーの部分一致でマッチ
     const keys = Object.keys(usCostByName);
-    const hit = keys.find((k) => k && (h.name.includes(k) || k.includes(h.name)));
-    return hit ? usCostByName[hit] : null;
+    const norm = (s) => s.replace(/[\s・\-－&＆　]/g, "").toLowerCase();
+    const hn = norm(h.name);
+    const hcode = (h.code || "").toUpperCase();
+
+    // ①ティッカー完全一致（CSVの名前末尾にティッカーが入っている形式 "ショッピファイ A SHOP"）
+    if (hcode) {
+      const hit = keys.find((k) => k.toUpperCase().endsWith(" " + hcode) || k.toUpperCase() === hcode);
+      if (hit) return usCostByName[hit];
+    }
+    // ②正規化後の名前部分一致
+    const hit2 = keys.find((k) => {
+      const kn = norm(k);
+      return kn.includes(hn) || hn.includes(kn);
+    });
+    return hit2 ? usCostByName[hit2] : null;
   };
   const usedCats = CATEGORIES.filter((c) => holdings.some((h) => h.cat === c.id));
 
