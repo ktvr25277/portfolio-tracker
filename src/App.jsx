@@ -592,77 +592,118 @@ Names: ${JSON.stringify(names)}`;
 
 
 // チャートモーダル（TradingViewウィジェット埋め込み）
-function ChartModal({ modal, onClose, C }) {
+function ChartModal({ modal, onClose, C, isDark }) {
+  const ref = React.useRef(null);
+  const [period, setPeriod] = React.useState("6M");
+
+  React.useEffect(() => {
+    if (!modal || !ref.current) return;
+    ref.current.innerHTML = "";
+    const { code, market } = modal;
+    if (!code) return;
+
+    // TradingViewシンボル
+    let symbol = "";
+    if (market === "us")     symbol = code;
+    else if (market === "jp") symbol = `TSE:${code}`;
+    else if (market === "crypto") symbol = `${code}USDT`;
+    if (!symbol) return;
+
+    // 期間→range変換
+    const rangeMap = { "1M":"1M","3M":"3M","6M":"6M","1Y":"12M","3Y":"60M","5Y":"60M" };
+    const range = rangeMap[period] || "6M";
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbol,
+      width: "100%",
+      height: 220,
+      locale: "ja",
+      dateRange: range,
+      colorTheme: isDark ? "dark" : "light",
+      trendLineColor: "rgba(59,130,246,1)",
+      underLineColor: "rgba(59,130,246,0.15)",
+      isTransparent: true,
+      autosize: true,
+      largeChartUrl: market === "jp"
+        ? `https://finance.yahoo.co.jp/quote/${code}.T/chart`
+        : `https://www.tradingview.com/chart/?symbol=${symbol}`,
+    });
+    ref.current.appendChild(script);
+  }, [modal, period, isDark]);
+
   if (!modal) return null;
   const { name, code, market } = modal;
 
-  // TradingViewのシンボルを組み立て
-  let symbol = "";
-  if (market === "us") {
-    symbol = code ? `NASDAQ:${code}` : "";
-  } else if (market === "jp") {
-    // 日本株: TSE:1234
-    symbol = code ? `TSE:${code}` : "";
-  } else if (market === "crypto") {
-    // BTC→BTCJPY など
-    symbol = code ? `${code}JPY` : "";
-  }
+  const links = market === "jp" && code ? [
+    { label: "📈 Yahoo株価", url: `https://finance.yahoo.co.jp/quote/${code}.T/chart` },
+    { label: "📊 株探", url: `https://kabutan.jp/stock/chart?code=${code}` },
+    { label: "📰 日経", url: `https://www.nikkei.com/nkd/company/?scode=${code}` },
+  ] : market === "us" && code ? [
+    { label: "📈 Yahoo Finance", url: `https://finance.yahoo.com/chart/${code}` },
+    { label: "📊 TradingView", url: `https://www.tradingview.com/chart/?symbol=${code}` },
+    { label: "📰 Financials", url: `https://finance.yahoo.com/quote/${code}/financials/` },
+  ] : [
+    { label: "🔍 検索", url: `https://finance.yahoo.co.jp/search/?query=${encodeURIComponent(name)}` },
+  ];
 
-  // Yahoo Finance のチャートURLをiframeで表示（TradingViewはCSP制限があるため）
-  const yahooSymbol = market === "jp" && code ? `${code}.T` : code || name;
-  const chartUrl = market === "us"
-    ? `https://finance.yahoo.com/chart/${code || name}`
-    : market === "jp" && code
-    ? `https://finance.yahoo.co.jp/quote/${code}.T/chart`
-    : `https://finance.yahoo.co.jp/search/?query=${encodeURIComponent(name)}`;
+  const periods = ["1M","3M","6M","1Y","3Y","5Y"];
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, width: "100%", maxWidth: 680, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: "var(--surface)", border: "2px solid var(--accent)",
+        borderRadius: 18, width:"100%", maxWidth:700, overflow:"hidden",
+        display:"flex", flexDirection:"column", boxShadow:"0 24px 64px rgba(0,0,0,0.5)",
+      }}>
         {/* ヘッダー */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid var(--border)" }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{name}</div>
-            {code && <div style={{ fontSize: 11, color: C.accent, marginTop: 2 }}>{code} · {market === "us" ? "米国株" : market === "jp" ? "国内株" : "暗号資産"}</div>}
+            <div style={{ fontSize:16, fontWeight:700, color:"var(--text)" }}>{name}</div>
+            {code && <div style={{ fontSize:11, color:"var(--accent)", marginTop:2 }}>{code} · {market==="us"?"米国株":market==="jp"?"国内株":"暗号資産"}</div>}
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: C.dim, padding: "4px 8px" }}>✕</button>
+          <button onClick={onClose} style={{ background:"transparent", border:"none", fontSize:22, cursor:"pointer", color:"var(--dim)", padding:"4px 10px", borderRadius:8 }}>✕</button>
         </div>
-        {/* チャートリンクボタン群 */}
-        <div style={{ padding: "16px 18px", display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {market === "jp" && code && (
-            <>
-              <a href={`https://finance.yahoo.co.jp/quote/${code}.T/chart`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📈 Yahooファイナンス チャート
-              </a>
-              <a href={`https://kabutan.jp/stock/chart?code=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📊 株探
-              </a>
-              <a href={`https://www.nikkei.com/nkd/company/?scode=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📰 日経
-              </a>
-            </>
-          )}
-          {market === "us" && code && (
-            <>
-              <a href={`https://finance.yahoo.com/chart/${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📈 Yahoo Finance Chart
-              </a>
-              <a href={`https://www.tradingview.com/chart/?symbol=${code}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📊 TradingView
-              </a>
-              <a href={`https://finance.yahoo.com/quote/${code}/financials/`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                📰 Financials
-              </a>
-            </>
-          )}
-          {(!code) && (
-            <a href={`https://finance.yahoo.co.jp/search/?query=${encodeURIComponent(name)}`} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: C.accent, color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-              🔍 {name} を検索
-            </a>
-          )}
-        </div>
-        <div style={{ padding: "0 18px 16px", fontSize: 11, color: C.dim }}>
-          タップで外部サイトが開きます。チャートはブラウザで確認できます。
+
+        {/* 期間セレクタ */}
+        {code && (
+          <div style={{ display:"flex", gap:6, padding:"12px 18px 0", flexWrap:"wrap" }}>
+            {periods.map(p => (
+              <button key={p} onClick={() => setPeriod(p)} style={{
+                padding:"4px 14px", borderRadius:20, border:"1px solid var(--border)",
+                background: period===p ? "var(--accent)" : "transparent",
+                color: period===p ? "#fff" : "var(--muted)",
+                fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit",
+              }}>{p}</button>
+            ))}
+          </div>
+        )}
+
+        {/* TradingViewウィジェット */}
+        {code ? (
+          <div style={{ padding:"8px 18px 4px" }}>
+            <div className="tradingview-widget-container" ref={ref} style={{ minHeight:220 }} />
+            <div style={{ fontSize:10, color:"var(--dim)", textAlign:"right", marginTop:2 }}>Powered by TradingView</div>
+          </div>
+        ) : (
+          <div style={{ padding:"20px 18px", color:"var(--dim)", fontSize:13 }}>
+            コードが未取得のため、次回スクショ取込時に自動で取得されます。
+          </div>
+        )}
+
+        {/* 外部リンク */}
+        <div style={{ display:"flex", gap:8, padding:"10px 18px 16px", flexWrap:"wrap" }}>
+          {links.map((l,i) => (
+            <a key={i} href={l.url} target="_blank" rel="noreferrer" style={{
+              padding:"8px 14px", borderRadius:9,
+              background: i===0 ? "var(--accent)" : "transparent",
+              border: i===0 ? "none" : "1px solid var(--border)",
+              color: i===0 ? "#fff" : "var(--text)",
+              fontSize:12, fontWeight:600, textDecoration:"none",
+            }}>{l.label}</a>
+          ))}
         </div>
       </div>
     </div>
@@ -1531,6 +1572,7 @@ web検索で以下の一次情報を中心に調査してください：
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+      <ChartModal modal={chartModal} onClose={() => setChartModal(null)} C={C} isDark={isDark} />
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "20px 16px 48px" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>

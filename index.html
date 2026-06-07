@@ -34,8 +34,8 @@
       [data-theme="light"] {
         --bg: #F0F4F8;
         --surface: #FFFFFF;
-        --surface2: #EFF6FF;
-        --border: #94A3B8;
+        --surface2: #EEF2FF;
+        --border: #6B7280;
         --text: #0F172A;
         --muted: #374151;
         --dim: #6B7280;
@@ -56,6 +56,17 @@
       [data-theme="light"] textarea,
       [data-theme="light"] select {
         color: var(--text);
+      }
+
+      /* ライトモード: カード・テーブルのボーダーを自動強化 */
+      [data-theme="light"] [style*="border-radius"] {
+        outline: none;
+      }
+      [data-theme="light"] table {
+        border-collapse: collapse;
+      }
+      [data-theme="light"] th, [data-theme="light"] td {
+        border-bottom: 1px solid var(--border) !important;
       }
       /* スムーズなテーマ切替 */
       *, *::before, *::after {
