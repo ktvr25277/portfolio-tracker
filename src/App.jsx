@@ -750,7 +750,7 @@ function ApiKeySetup({ onSave }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 14 }}>
       <div style={{ width: "100%", maxWidth: 460, background: "var(--surface)", border: "1px solid #1E293B", borderRadius: 16, padding: 32 }}>
         <div style={{ fontSize: 11, color: "#3B82F6", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Zenith</div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>APIキーの設定</div>
@@ -764,7 +764,7 @@ function ApiKeySetup({ onSave }) {
         {err && <div style={{ fontSize: 12, color: "#F87171", marginBottom: 8 }}>⚠ {err}</div>}
         <button onClick={test} disabled={testing || !key.trim()} style={{
           width: "100%", padding: "11px", background: testing ? "var(--surface2)" : "#3B82F6", border: "none", borderRadius: 9,
-          color: "#fff", fontSize: 14, fontWeight: 700, cursor: testing ? "default" : "pointer", fontFamily: "inherit", marginBottom: 20,
+          color: "#fff", fontSize: 14, fontWeight: 700, cursor: testing ? "default" : "pointer", fontFamily: "inherit", marginBottom: 7,
         }}>{testing ? "⟳ 接続確認中..." : "接続してアプリを開く"}</button>
         <div style={{ fontSize: 11, color: "var(--dim)", lineHeight: 1.7, borderTop: "1px solid #1E293B", paddingTop: 16 }}>
           <strong style={{ color: "var(--dim)" }}>APIキーの取得方法</strong><br />
@@ -1673,9 +1673,23 @@ Use the most recent trading day vs previous close. symbol must match input exact
   return (
     <div
       style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}
-      onTouchStart={e => { window._swipeX = e.touches[0].clientX; }}
+      onTouchStart={e => {
+        // スクロール可能な要素の中はスワイプ無効
+        let el = e.target;
+        while (el) {
+          const s = window.getComputedStyle(el);
+          if (s.overflowX === 'auto' || s.overflowX === 'scroll') { window._swipeX = null; return; }
+          el = el.parentElement;
+        }
+        window._swipeX = e.touches[0].clientX;
+        window._swipeY = e.touches[0].clientY;
+      }}
       onTouchEnd={e => {
-        const dx = e.changedTouches[0].clientX - (window._swipeX || 0);
+        if (window._swipeX == null) return;
+        const dx = e.changedTouches[0].clientX - window._swipeX;
+        const dy = e.changedTouches[0].clientY - (window._swipeY || 0);
+        // 縦スクロールの場合は無視
+        if (Math.abs(dy) > Math.abs(dx)) return;
         if (Math.abs(dx) < 60) return;
         const tabs = ['dashboard','holdings','analysis','realestate','stock','upload'];
         const idx = tabs.indexOf(tab);
@@ -1684,9 +1698,9 @@ Use the most recent trading day vs previous close. symbol must match input exact
       }}
     >
 
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "20px 16px 48px" }}>
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "12px 14px 32px" }}>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
               <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase" }}>Zenith</div>
@@ -1705,7 +1719,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, background: "var(--tab-bg)", padding: 4, borderRadius: 10, marginBottom: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--tab-bg)", padding: 4, borderRadius: 10, marginBottom: 8, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
           <style>{`.tab-bar::-webkit-scrollbar{display:none}`}</style>
           {tabBtn("dashboard", "ダッシュボード", "📊")}
           {tabBtn("holdings", "保有一覧", "📋")}
@@ -1715,7 +1729,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
           {tabBtn("upload", "📷取込", "")}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 18, fontSize: 10.5, color: C.dim }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 6, fontSize: 10.5, color: C.dim }}>
           <span>{lastSync ? `最終同期 ${lastSync.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}` : "未同期"}</span>
           <button onClick={() => reloadFromStorage(true)} style={{
             padding: "4px 10px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6,
@@ -1728,7 +1742,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
           <div>
             <div style={{
               background: "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.10))",
-              border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 22px", marginBottom: 16,
+              border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 22px", marginBottom: 8,
             }}>
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>総資産</div>
               <div style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>{fmt(totalValue)}</div>
@@ -1786,7 +1800,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10, marginBottom: 7 }}>
               {[
                 { l: "含み損益", v: fmtSign(totalGL), s: fmtPct(totalGLPct), c: totalGL >= 0 ? C.pos : C.neg },
                 { l: "銘柄数", v: String(assetHoldings.length), s: `${usedCats.length}区分`, c: C.text },
@@ -1801,8 +1815,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 16 }}>
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 14 }}>区分別配分</div>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 8 }}>区分別配分</div>
                 {byCat.length > 0 ? (
                   <>
                     <ResponsiveContainer width="100%" height={180}>
@@ -1825,8 +1839,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
                 ) : <div style={{ textAlign: "center", color: C.dim, padding: 40, fontSize: 13, lineHeight: 1.8 }}>スクショを取り込むと<br />表示されます</div>}
               </div>
 
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 14 }}>評価額推移</div>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 8 }}>評価額推移</div>
                 {history.length > 1 ? (
                   <ResponsiveContainer width="100%" height={200}>
                     <LineChart data={history}>
@@ -1841,8 +1855,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
             </div>
 
             {hasNisa && (
-              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>NISA非課税枠（取得額ベース）</span>
                 </div>
                 <NisaGauge label="生涯枠 合計" used={nisaTotalCost} limit={LIMIT_TOTAL} color="#8B5CF6" C={C} />
@@ -1858,8 +1872,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
             )}
 
             {hasTx && (
-              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 14 }}>{thisYear}年 年間投資枠の使用状況</div>
+              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 8 }}>{thisYear}年 年間投資枠の使用状況</div>
                 <NisaGauge label="成長投資枠（年間）" used={annualGrowthUsed} limit={ANNUAL_GROWTH} color="#8B5CF6" C={C} />
                 <NisaGauge label="つみたて投資枠（年間）" used={annualTsumitateUsed} limit={ANNUAL_TSUMITATE} color="#EC4899" C={C} />
                 <div style={{ fontSize: 10.5, color: C.dim, marginTop: 6, lineHeight: 1.6 }}>
@@ -1869,14 +1883,14 @@ Use the most recent trading day vs previous close. symbol must match input exact
             )}
 
             {hasRealized && (
-              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{thisYear}年 利益確定（実現損益）</span>
                   <span style={{ fontSize: 20, fontWeight: 800, color: realizedTotal >= 0 ? C.pos : C.neg, fontVariantNumeric: "tabular-nums" }}>{fmtSign(realizedTotal)}</span>
                 </div>
 
                 {/* 課税区分ごとの集計 */}
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                   {realizedByTax.map((t, i) => (
                     <div key={i} style={{ flex: "1 1 90px", minWidth: 90, background: "var(--surface2)", borderRadius: 9, padding: "9px 11px" }}>
                       <div style={{ fontSize: 10.5, color: C.dim, marginBottom: 2 }}>{t.tax}{(t.tax === "NISA成長" || t.tax === "NISA積立" || t.tax === "旧NISA") ? "（非課税）" : ""}</div>
@@ -1888,7 +1902,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
                 {/* 課税対象の概算税額メモ */}
                 {taxableRealized > 0 && (
-                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 12, padding: "8px 11px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 7, padding: "8px 11px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, lineHeight: 1.6 }}>
                     課税対象（特定・一般）の実現益 <b>{fmt(taxableRealized)}</b> → 概算税額（20.315%）<b>約{fmt(taxableRealized * 0.20315)}</b>
                   </div>
                 )}
@@ -1922,8 +1936,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
             )}
 
             {holdings.length > 0 && (
-              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 12 }}>含み損益ランキング</div>
+              <div style={{ marginTop: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 7 }}>含み損益ランキング</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   {[{ label: "▲ 含み益 TOP3", list: top3, c: C.pos }, { label: "▼ 含み損 TOP3", list: bot3, c: C.neg }].map((col, ci) => (
                     <div key={ci}>
@@ -1955,7 +1969,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
               const sum = hs.reduce((s, h) => s + (h.market_value || 0), 0);
               const gl = hs.reduce((s, h) => s + (h.gain_loss || 0), 0);
               return (
-                <div key={cat.id} style={{ marginBottom: 22 }}>
+                <div key={cat.id} style={{ marginBottom: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 9 }}>
                     <span style={{ width: 9, height: 9, borderRadius: "50%", background: cat.color }} />
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{cat.label}</span>
@@ -1989,7 +2003,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                     }
                     const fxGl = jpyGlSum - usdGlYenSum;
                     return (
-                      <div style={{ display: "flex", gap: 14, marginBottom: 8, padding: "8px 12px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 11, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 11, flexWrap: "wrap" }}>
                         <span style={{ color: C.dim }}>損益の内訳（{matched}銘柄）:</span>
                         <span>株価要因 <b style={{ color: usdGlYenSum >= 0 ? C.pos : C.neg }}>{fmtSign(Math.round(usdGlYenSum))}</b></span>
                         <span>為替要因 <b style={{ color: fxGl >= 0 ? C.pos : C.neg }}>{fmtSign(Math.round(fxGl))}</b></span>
@@ -2009,7 +2023,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                           { l: "含み損益", k: "gl" },
                           { l: "評価額", k: "mv" },
                         ].map(({ l, k }, i) => (
-                          <th key={i} onClick={() => { if (k === "dc") fetchDailyChange(); else if (k) setHoldingSort(holdingSort === k ? null : k); }} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k === "dc" || (k && holdingSort === k) ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k ? "pointer" : "default", userSelect: "none" }}>
+                          <th key={i} onClick={() => { if (k === "dc") fetchDailyChange(); else if (k) setHoldingSort(holdingSort === k ? null : k); }} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k === "dc" || (k && holdingSort === k) ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "6px 10px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k ? "pointer" : "default", userSelect: "none" }}>
                             {l}{k && k !== "dc" && holdingSort === k ? " ▼" : k && k !== "dc" ? " ↕" : ""}
                           </th>
                         ))}</tr>
@@ -2024,7 +2038,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                           const dc = h.code ? dailyChange[h.code] : null;
                           return (
                           <tr key={i}>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 220, cursor: "pointer" }}
+                            <td style={{ padding: "7px 10px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 220, cursor: "pointer" }}
                               onClick={() => {
                                 const market = cat.id === "us" ? "us" : cat.id === "crypto" ? "crypto" : "jp";
                                 const code = h.code;
@@ -2040,7 +2054,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                               </div>
                             </td>
                             {/* 前日比 */}
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "7px 10px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, whiteSpace: "nowrap" }}>
                               {dc ? (
                                 <span style={{ color: dc.change >= 0 ? C.pos : C.neg }}>
                                   {dc.change >= 0 ? "+" : ""}{cat.id === "us"
@@ -2053,7 +2067,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                               )}
                             </td>
                             {/* 含み損益 */}
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
+                            <td style={{ padding: "7px 10px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
                               {(() => {
                                 if (cat.id !== "us") {
                                   return (
@@ -2079,7 +2093,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                               })()}
                             </td>
                             {/* 評価額（右端） */}
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
+                            <td style={{ padding: "7px 10px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
                               {fmt(h.market_value)}
                               {h.local_value != null && h.currency && (
                                 <div style={{ fontSize: 9.5, color: C.dim }}>{h.currency} {h.local_value.toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>
@@ -2107,8 +2121,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
               <div style={{ textAlign: "center", color: C.dim, padding: 80, fontSize: 14 }}>スクショを取り込むと分析できます</div>
             ) : (
               <>
-                <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 12 }}>切り口を選んで構成を分析できます。</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
+                <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 7 }}>切り口を選んで構成を分析できます。</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
                   {DIMENSIONS.map((d) => (
                     <button key={d.id} onClick={() => setGroupDim(d.id)} style={{
                       padding: "6px 13px", borderRadius: 20, border: `1px solid ${groupDim === d.id ? C.accent : C.border}`,
@@ -2120,7 +2134,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
                 {curDim.needsAI && !isClassified ? (
                   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 28, textAlign: "center" }}>
-                    <div style={{ fontSize: 13, color: C.muted, marginBottom: 14, lineHeight: 1.7 }}>
+                    <div style={{ fontSize: 13, color: C.muted, marginBottom: 8, lineHeight: 1.7 }}>
                       「{curDim.label}」で分析するには、AIによる銘柄分類が必要です。<br />保有銘柄を資産クラス・地域・セクターに自動分類します。
                     </div>
                     <button onClick={runClassify} disabled={classifying} style={{
@@ -2132,7 +2146,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                 ) : (
                   <>
                     {/* 市場の中での自分の位置 */}
-                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
+                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>📊 市場の中での自分の位置</span>
                         <button onClick={() => runSectorBench(groups)} disabled={benchLoading} style={{
@@ -2147,7 +2161,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
                       {/* 相場サマリー */}
                       {market && market.sentiment && (
-                        <div style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 14, background: market.sentiment.includes("上げ") ? "rgba(16,185,129,0.10)" : market.sentiment.includes("下げ") ? "rgba(248,113,113,0.10)" : "rgba(148,163,184,0.10)", border: `1px solid ${market.sentiment.includes("上げ") ? "rgba(16,185,129,0.3)" : market.sentiment.includes("下げ") ? "rgba(248,113,113,0.3)" : C.border}` }}>
+                        <div style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 8, background: market.sentiment.includes("上げ") ? "rgba(16,185,129,0.10)" : market.sentiment.includes("下げ") ? "rgba(248,113,113,0.10)" : "rgba(148,163,184,0.10)", border: `1px solid ${market.sentiment.includes("上げ") ? "rgba(16,185,129,0.3)" : market.sentiment.includes("下げ") ? "rgba(248,113,113,0.3)" : C.border}` }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <span style={{ fontSize: 20 }}>{market.sentiment.includes("上げ") ? "📈" : market.sentiment.includes("下げ") ? "📉" : "➡️"}</span>
                             <span style={{ fontSize: 15, fontWeight: 700, color: market.sentiment.includes("上げ") ? C.pos : market.sentiment.includes("下げ") ? C.neg : C.text }}>{market.sentiment}</span>
@@ -2158,14 +2172,14 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
                       {/* 主要指数 vs 保有 */}
                       {market && market.indices && market.indices.length > 0 && (
-                        <div style={{ marginBottom: 14 }}>
-                          <div style={{ fontSize: 11.5, fontWeight: 600, color: C.dim, marginBottom: 10 }}>主要指数（年初来）と、あなたの該当保有</div>
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 600, color: C.dim, marginBottom: 6 }}>主要指数（年初来）と、あなたの該当保有</div>
                           {market.indices.map((idx, i) => {
                             const mine = indexMatch(idx.n);
                             const mkt = idx.ytd;
                             const diff = mine && mine.ret != null ? mine.ret - mkt : null;
                             return (
-                              <div key={i} style={{ marginBottom: 12 }}>
+                              <div key={i} style={{ marginBottom: 7 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                                   <span style={{ fontWeight: 600, color: C.text }}>{idx.n}
                                     {idx.d1 != null && <span style={{ fontSize: 10, color: idx.d1 >= 0 ? C.pos : C.neg, marginLeft: 6 }}>前日比 {idx.d1 >= 0 ? "+" : ""}{idx.d1.toFixed(2)}%</span>}
@@ -2201,12 +2215,12 @@ Use the most recent trading day vs previous close. symbol must match input exact
                       {/* セクター比較 */}
                       {sectorBench && groups.filter((g) => g.ret != null && sectorBench.data[g.name] != null).length > 0 && (
                         <div>
-                          <div style={{ fontSize: 11.5, fontWeight: 600, color: C.dim, marginBottom: 10 }}>セクター指数（1年）と、あなたの保有</div>
+                          <div style={{ fontSize: 11.5, fontWeight: 600, color: C.dim, marginBottom: 6 }}>セクター指数（1年）と、あなたの保有</div>
                           {groups.filter((g) => g.ret != null && sectorBench.data[g.name] != null).map((g, i) => {
                             const mkt = sectorBench.data[g.name];
                             const diff = g.ret - mkt;
                             return (
-                              <div key={i} style={{ marginBottom: 12 }}>
+                              <div key={i} style={{ marginBottom: 7 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                                   <span style={{ fontWeight: 600, color: C.text }}>{g.name}</span>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: diff >= 0 ? C.pos : C.neg }}>{diff >= 0 ? "市場を+" : "市場を"}{diff.toFixed(1)}pt{diff >= 0 ? "上回る" : "下回る"}</span>
@@ -2235,7 +2249,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                     </div>
 
                     {/* 集中度サマリー */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: 10, marginBottom: 18 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: 10, marginBottom: 6 }}>
                       {[
                         { l: "グループ数", v: `${groups.length}`, s: curDim.label + "別" },
                         { l: "最大グループ", v: `${topShare.toFixed(0)}%`, s: groups[0]?.name || "―" },
@@ -2251,15 +2265,15 @@ Use the most recent trading day vs previous close. symbol must match input exact
                     </div>
 
                     {/* パフォーマンス散布図: x=リターン / y=損益額 / 円=評価額 */}
-                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 4 }}>銘柄パフォーマンス マップ</div>
-                      <div style={{ fontSize: 10.5, color: C.dim, marginBottom: 10 }}>横＝取得来リターン、縦＝損益額、円の大きさ＝評価額。右上ほど「高リターンで大きく稼いだ主力」、左下ほど「大きく負けている」。</div>
+                      <div style={{ fontSize: 10.5, color: C.dim, marginBottom: 6 }}>横＝取得来リターン、縦＝損益額、円の大きさ＝評価額。右上ほど「高リターンで大きく稼いだ主力」、左下ほど「大きく負けている」。</div>
                       <PerfScatter holdings={holdingsWithRet} fmt={fmt} fmtSign={fmtSign} />
                     </div>
 
                     {/* 勝ち/負け 貢献トップ（コンパクト） */}
-                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 12 }}>貢献トップ（取得来の損益）</div>
+                    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 7 }}>貢献トップ（取得来の損益）</div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                         {[{ label: "▲ 利益貢献", list: contribRanked.filter((h) => (h.gain_loss || 0) > 0).slice(0, 5), c: C.pos },
                           { label: "▼ 損失", list: contribRanked.filter((h) => (h.gain_loss || 0) < 0).slice(-5).reverse(), c: C.neg }].map((col, ci) => (
@@ -2296,8 +2310,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
         {tab === "stock" && (
           <div>
             {/* 条件入力エリア */}
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7, flexWrap: "wrap", gap: 8 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>📡 株式探索条件</div>
                   <div style={{ fontSize: 10.5, color: C.dim, marginTop: 2 }}>テーマ・選定基準を自由に編集して探索できます</div>
@@ -2318,7 +2332,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
             </div>
 
             {/* エラー */}
-            {stockError && <div style={{ fontSize: 12.5, color: C.neg, padding: "12px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, marginBottom: 16 }}>⚠ {stockError}</div>}
+            {stockError && <div style={{ fontSize: 12.5, color: C.neg, padding: "12px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, marginBottom: 8 }}>⚠ {stockError}</div>}
 
             {/* ローディング */}
             {stockStatus === "loading" && (
@@ -2330,7 +2344,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
             {/* 前回結果ヘッダー */}
             {stockResults.length > 0 && stockStatus !== "loading" && (
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7, flexWrap: "wrap", gap: 6 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>成長期待株 ランキング TOP{stockResults.length}</div>
                 <div style={{ fontSize: 10.5, color: C.dim }}>{stockUpdatedAt ? stockUpdatedAt.toLocaleString("ja-JP") + " 調査" : ""}</div>
               </div>
@@ -2347,9 +2361,9 @@ Use the most recent trading day vs previous close. symbol must match input exact
                 { label: "リスク耐性", val: s.risk, max: 20, color: "#64748B" },
               ];
               return (
-                <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 12 }}>
+                <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 12, marginBottom: 7 }}>
                   {/* ヘッダー */}
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 7 }}>
                     <div style={{ width: 40, height: 40, borderRadius: "50%", background: i < 3 ? ["#F59E0B", "var(--muted)", "#CD7F32"][i] : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                       {s.rank || i + 1}
                     </div>
@@ -2365,7 +2379,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                   </div>
 
                   {/* スコアバー */}
-                  <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 7, flexWrap: "wrap" }}>
                     {scores.map((sc, j) => (
                       <div key={j} style={{ flex: "1 1 80px", minWidth: 70 }}>
                         <div style={{ fontSize: 9.5, color: C.dim, marginBottom: 3 }}>{sc.label}</div>
@@ -2378,7 +2392,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                   </div>
 
                   {/* 投資妙味コメント（常時表示） */}
-                  <div style={{ padding: "9px 12px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 8, fontSize: 12, color: C.text, marginBottom: 10, lineHeight: 1.6 }}>
+                  <div style={{ padding: "7px 10px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 8, fontSize: 12, color: C.text, marginBottom: 6, lineHeight: 1.6 }}>
                     💡 {s.comment}
                   </div>
 
@@ -2421,12 +2435,12 @@ Use the most recent trading day vs previous close. symbol must match input exact
         {/* ── 不動産 ── */}
         {tab === "realestate" && (
           <div>
-            <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 20, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 7, lineHeight: 1.7 }}>
               土地は査定額を手入力、建物は新築時の建築費と築年数から自動計算します（木造耐用年数22年・最低残存10%）。
             </div>
 
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 16 }}>🏠 自宅 不動産情報</div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 8 }}>🏠 自宅 不動産情報</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {[
                   { key: "land", label: "土地評価額（査定額・円）", placeholder: "例: 30000000", hint: "固定資産税評価額 ÷ 0.7 や路線価×面積でもOK" },
@@ -2441,7 +2455,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
                       placeholder={placeholder}
                       value={realestate[key]}
                       onChange={(e) => setRealestate((prev) => ({ ...prev, [key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 12px", background: "var(--input-bg)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "7px 10px", background: "var(--input-bg)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
                     />
                     {hint && <div style={{ fontSize: 10.5, color: C.dim, marginTop: 4 }}>{hint}</div>}
                   </div>
@@ -2451,8 +2465,8 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
             {/* 計算結果 */}
             {hasRealestate && (
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20, marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 14 }}>📊 評価額の内訳</div>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 14, marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, marginBottom: 8 }}>📊 評価額の内訳</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {[
                     { label: "土地評価額", value: reLand, sub: "手入力値", color: C.text },
@@ -2499,7 +2513,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
         {/* ── スクショ取込（4枠）── */}
         {tab === "upload" && (
           <div>
-            <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 18, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12.5, color: C.dim, marginBottom: 6, lineHeight: 1.7 }}>
               枠をタップして選択し、<strong style={{ color: C.text }}>{navigator.platform.toLowerCase().includes("mac") ? "⌘V" : "Ctrl+V"}</strong> でコピー済みのスクショを貼り付けられます（ファイル選択も可）。国内画面は特定／NISA成長／旧NISA／つみたてに自動で仕分けされます。
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(225px,1fr))", gap: 14 }}>
@@ -2518,14 +2532,14 @@ Use the most recent trading day vs previous close. symbol must match input exact
               />
               {manualUsdJpy && <span style={{ color: C.accent }}>このレートを優先します</span>}
             </div>
-            <div style={{ marginTop: 22, marginBottom: 10, fontSize: 12.5, color: C.dim, lineHeight: 1.7 }}>
+            <div style={{ marginTop: 22, marginBottom: 6, fontSize: 12.5, color: C.dim, lineHeight: 1.7 }}>
               NISAの年間枠を自動計算するには、SBI証券の<strong style={{ color: C.text }}>取引履歴CSV</strong>（または画面スクショ）を取り込んでください。
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(225px,1fr))", gap: 14 }}>
               <TxUploadCard count={transactions.length} status={status.tx} error={errors.tx} onFile={processTxFile}
                 selected={selectedSlot === "tx"} onSelect={() => setSelectedSlot("tx")} C={C} />
             </div>
-            <div style={{ marginTop: 22, marginBottom: 10, fontSize: 12.5, color: C.dim, lineHeight: 1.7 }}>
+            <div style={{ marginTop: 22, marginBottom: 6, fontSize: 12.5, color: C.dim, lineHeight: 1.7 }}>
               暗号資産の損益を出すには、Coincheckの<strong style={{ color: C.text }}>購入履歴</strong>を取り込んでください（2枚に分かれてもOK、追記でマージします）。
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(225px,1fr))", gap: 14 }}>
@@ -2548,7 +2562,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
             <div style={{ marginTop: 24, padding: 15, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12 }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text, marginBottom: 6 }}>☁️ GitHub Gistで自動同期（おすすめ）</div>
-              <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 12 }}>
+              <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 7 }}>
                 Secret Gist（非公開）にデータを保存し、両方の端末から自動で読み書きします。コピペ不要になります。<br />
                 <strong style={{ color: C.muted }}>初回手順：</strong>①PCで<code style={{ color: C.text }}>gist</code>権限付きトークンを入れて「接続」→ Secret Gistが作られIDが表示されます。②そのトークンとIDをスマホ側にも入れて「接続」。以降は自動同期です。
               </div>
@@ -2580,7 +2594,7 @@ Use the most recent trading day vs previous close. symbol must match input exact
 
             <div style={{ marginTop: 16, padding: 15, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12 }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text, marginBottom: 6 }}>📱 手動バックアップ（コピペ方式）</div>
-              <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 12 }}>
+              <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 7 }}>
                 Gistを使わない場合の手動の手段です。片方で書き出してコピー → もう片方で貼り付けて反映します。
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -2619,9 +2633,9 @@ function TxUploadCard({ count, status, error, onFile, selected, onSelect, C }) {
     <div onClick={onSelect} style={{
       background: selected ? "rgba(139,92,246,0.08)" : C.surface,
       border: `1.5px solid ${selected ? "#8B5CF6" : (status === "done" ? "#8B5CF655" : C.border)}`,
-      borderRadius: 14, padding: 16, cursor: "pointer", transition: "all 0.15s",
+      borderRadius: 14, padding: 10, cursor: "pointer", transition: "all 0.15s",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
         <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#8B5CF6" }} />
         <span style={{ fontWeight: 600, fontSize: 13.5 }}>取引履歴（NISA枠）</span>
         {selected && <span style={{ fontSize: 10, color: "#8B5CF6", marginLeft: "auto", fontWeight: 600 }}>貼り付け待ち</span>}
@@ -2654,9 +2668,9 @@ function CryptoBuyUploadCard({ count, status, error, onFile, selected, onSelect,
     <div onClick={onSelect} style={{
       background: selected ? "rgba(34,197,94,0.08)" : C.surface,
       border: `1.5px solid ${selected ? "#22C55E" : (status === "done" ? "#22C55E55" : C.border)}`,
-      borderRadius: 14, padding: 16, cursor: "pointer", transition: "all 0.15s",
+      borderRadius: 14, padding: 10, cursor: "pointer", transition: "all 0.15s",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
         <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#22C55E" }} />
         <span style={{ fontWeight: 600, fontSize: 13.5 }}>Coincheck購入履歴</span>
         {selected && <span style={{ fontSize: 10, color: "#22C55E", marginLeft: "auto", fontWeight: 600 }}>貼り付け待ち</span>}
@@ -2687,7 +2701,7 @@ function NisaGauge({ label, used, limit, color, C }) {
   const remain = limit - used;
   const over = remain < 0;
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 }}>
         <span style={{ fontSize: 12, color: C.text, fontWeight: 600 }}>{label}</span>
         <span style={{ fontSize: 11, color: C.dim, fontVariantNumeric: "tabular-nums" }}>
@@ -2712,9 +2726,9 @@ function UploadCard({ u, hs, status, error, onFile, selected, onSelect, C }) {
     <div onClick={onSelect} style={{
       background: selected ? "rgba(59,130,246,0.08)" : C.surface,
       border: `1.5px solid ${selected ? u.color : (status === "done" ? u.color + "55" : C.border)}`,
-      borderRadius: 14, padding: 16, cursor: "pointer", transition: "all 0.15s",
+      borderRadius: 14, padding: 10, cursor: "pointer", transition: "all 0.15s",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
         <span style={{ width: 9, height: 9, borderRadius: "50%", background: u.color }} />
         <span style={{ fontWeight: 600, fontSize: 13.5 }}>{u.label}</span>
         {selected && <span style={{ fontSize: 10, color: u.color, marginLeft: "auto", fontWeight: 600 }}>貼り付け待ち</span>}
