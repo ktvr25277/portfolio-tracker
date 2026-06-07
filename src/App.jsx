@@ -1605,7 +1605,7 @@ web検索で以下の一次情報を中心に調査してください：
 
   const tabBtn = (id, label, icon) => (
     <button onClick={() => setTab(id)} style={{
-      flex: 1, padding: "8px 3px", borderRadius: 7, border: "none", cursor: "pointer",
+      flex: "0 0 auto", padding: "8px 10px", borderRadius: 7, border: "none", cursor: "pointer",
       fontSize: 10.5, fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap",
       background: tab === id ? C.accent : "transparent", color: tab === id ? "#fff" : C.muted, transition: "all 0.15s",
     }}>{icon} {label}</button>
@@ -1635,7 +1635,8 @@ web検索で以下の一次情報を中心に調査してください：
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, background: "var(--tab-bg)", padding: 4, borderRadius: 10, marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--tab-bg)", padding: 4, borderRadius: 10, marginBottom: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          <style>{`.tab-bar::-webkit-scrollbar{display:none}`}</style>
           {tabBtn("dashboard", "ダッシュボード", "📊")}
           {tabBtn("holdings", "保有一覧", "📋")}
           {tabBtn("analysis", "分析", "🔍")}
