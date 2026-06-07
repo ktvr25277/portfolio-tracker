@@ -697,6 +697,7 @@ export default function App() {
   if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
+  const [importWarnings, setImportWarnings] = useState(null); // { warnings, pendingH, scopeId }
   const [history, setHistory] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [usCost, setUsCost] = useState([]); // 米国株の取得情報（円簿価算出用）
@@ -934,6 +935,24 @@ export default function App() {
           cat: scopeId === "sbi_jp" ? (h.cat || "tokutei") : SCOPE_CAT[scopeId],
           updated: now,
         }));
+      }
+
+      // ── 取込バリデーション ──
+      const warnings = newH.filter(h => {
+        if (h.cat === 'loan' || h.cat === 'cash_sbi' || h.cat === 'cash' || !h.market_value) return false;
+        const mv = h.market_value || 0;
+        const gl = h.gain_loss || 0;
+        // 取得コスト = 評価額 - 含み損益 がマイナス → 評価額が単価のまま
+        if (mv - gl < 0) return true;
+        // 含み損益の絶対値が評価額より大きい → おかしい
+        if (Math.abs(gl) > mv * 2) return true;
+        return false;
+      }).map(h => ({ name: h.name, market_value: h.market_value, gain_loss: h.gain_loss }));
+
+      if (warnings.length > 0) {
+        setImportWarnings({ warnings, pendingH: newH, scopeId });
+        setStatus((s) => ({ ...s, [scopeId]: "done" }));
+        return;
       }
 
       setHoldings((prev) => {
