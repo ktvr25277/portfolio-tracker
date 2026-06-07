@@ -109,7 +109,14 @@ Add "c" to classify which section header the holding appears under:
 
 Format: [{"n":"銘柄名（コードなし）","cd":"4桁コード or null","mv":評価額,"g":損益,"p":損益率,"c":"特定|成長|旧|積立"}]
 
-IMPORTANT: "n" must contain ONLY the name, NOT the code. "cd" must be the 4-digit numeric string.
+CRITICAL for "mv": This screen shows 保有株数/口数, 取得単価, 現在値, 評価損益 — but NOT the total 評価額 directly.
+Calculate mv = 保有株数(or口数) × 現在値. Example: 880株 × 3,065円 = 2,697,200 → mv=2697200.
+For 投資信託 (口数): 口数 × 基準価額 ÷ 10000. Example: 662,910口 × 15,660 ÷ 10000 = 1,038,097.
+"g" = 評価損益 shown directly (the +/- colored number). Do NOT calculate it.
+"p" = 損益率 if shown, else g ÷ (mv - g) × 100.
+NEVER use 現在値 alone as mv — always multiply by quantity.
+
+IMPORTANT: "n" must contain ONLY the name, NOT the code. "cd" must be the 4-character code string.
 Output ALL items (cash + holdings) in one flat JSON array.`
     : scopeId === "bank"
     ? `Bank balance screen. Output one object per balance:
