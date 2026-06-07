@@ -799,6 +799,8 @@ export default function App() {
   if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
+  const [dailyChange, setDailyChange] = useState({}); // { "7550": { change: -30, changePct: -0.5 } }
+  const [dailyLoading, setDailyLoading] = useState(false);
   const [importPreview, setImportPreview] = useState(null); // { rows, scopeId } 取込プレビュー
   const [history, setHistory] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -1301,6 +1303,37 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
+  // 前日比をYahoo Finance APIから取得
+  const fetchDailyChange = useCallback(async () => {
+    const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
+    if (!targets.length) return;
+    setDailyLoading(true);
+    const result = {};
+    await Promise.allSettled(targets.map(async h => {
+      try {
+        const symbol = h.cat === 'us' ? h.code : `${h.code}.T`;
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+        const r = await fetch(url);
+        if (!r.ok) return;
+        const d = await r.json();
+        const quotes = d?.chart?.result?.[0]?.indicators?.quote?.[0];
+        const closes = quotes?.close;
+        if (closes && closes.length >= 2) {
+          const prev = closes[closes.length - 2];
+          const cur = closes[closes.length - 1];
+          if (prev && cur) {
+            result[h.code] = {
+              change: Math.round((cur - prev) * 100) / 100,
+              changePct: Math.round((cur - prev) / prev * 10000) / 100,
+            };
+          }
+        }
+      } catch {}
+    }));
+    setDailyChange(result);
+    setDailyLoading(false);
+  }, [holdingsRaw]);
+
   const runClassify = useCallback(async () => {
     if (!holdingsRaw.length) return;
     setClassifying(true); setClassifyErr(null);
@@ -1400,6 +1433,13 @@ web検索で以下の一次情報を中心に調査してください：
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
   }, [tab, selectedSlot, processFile, processTxFile, processCryptoBuyFile]);
+
+  // 保有一覧タブを開いた時に前日比を自動取得
+  useEffect(() => {
+    if (tab === 'holdings' && holdingsRaw.length > 0 && Object.keys(dailyChange).length === 0) {
+      fetchDailyChange();
+    }
+  }, [tab, holdingsRaw.length]);
 
   // 暗号資産: 通貨ごとの取得額（円）・数量を購入履歴から積み上げ
   const cryptoCostByCoin = (() => {
@@ -1935,12 +1975,11 @@ web検索で以下の一次情報を中心に調査してください：
                       <thead>
                         <tr>{[
                           { l: "銘柄", k: null },
+                          { l: dailyLoading ? "前日比 ⟳" : "前日比", k: "dc" },
                           { l: "評価額", k: "mv" },
-                          { l: "含み損益", k: "gl" },
-                          { l: "損益率", k: "pct" },
                         ].map(({ l, k }, i) => (
-                          <th key={i} onClick={() => k && setHoldingSort(holdingSort === k ? null : k)} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k && holdingSort === k ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k ? "pointer" : "default", userSelect: "none" }}>
-                            {l}{k && holdingSort === k ? " ▼" : k ? " ↕" : ""}
+                          <th key={i} onClick={() => k && k !== "dc" && setHoldingSort(holdingSort === k ? null : k)} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, color: k && holdingSort === k ? C.accent : C.dim, fontWeight: k && holdingSort === k ? 700 : 500, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", cursor: k && k !== "dc" ? "pointer" : "default", userSelect: "none" }}>
+                            {l}{k && k !== "dc" && holdingSort === k ? " ▼" : k && k !== "dc" ? " ↕" : ""}
                           </th>
                         ))}</tr>
                       </thead>
@@ -1950,7 +1989,9 @@ web検索で以下の一次情報を中心に調査してください：
                           if (holdingSort === "gl") return (b.gain_loss || 0) - (a.gain_loss || 0);
                           if (holdingSort === "pct") return (b.gain_loss_pct || 0) - (a.gain_loss_pct || 0);
                           return 0;
-                        }).map((h, i) => (
+                        }).map((h, i) => {
+                          const dc = h.code ? dailyChange[h.code] : null;
+                          return (
                           <tr key={i}>
                             <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, fontSize: 12.5, fontWeight: 600, maxWidth: 220, cursor: "pointer" }}
                               onClick={() => {
@@ -1967,6 +2008,20 @@ web検索で以下の一次情報を中心に調査してください：
                                 {h.currency && <span style={{ fontSize: 9, fontWeight: 600, color: cat.color, border: `1px solid ${cat.color}66`, borderRadius: 3, padding: "1px 4px", whiteSpace: "nowrap", flexShrink: 0 }}>{h.currency}</span>}
                               </div>
                             </td>
+                            {/* 前日比 */}
+                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, whiteSpace: "nowrap" }}>
+                              {dc ? (
+                                <span style={{ color: dc.change >= 0 ? C.pos : C.neg }}>
+                                  {dc.change >= 0 ? "+" : ""}{cat.id === "us"
+                                    ? `$${dc.change.toFixed(2)}`
+                                    : dc.change >= 0 ? `+${Math.round(dc.change).toLocaleString()}円` : `${Math.round(dc.change).toLocaleString()}円`}
+                                  <span style={{ fontSize: 10, marginLeft: 3 }}>({dc.changePct >= 0 ? "+" : ""}{dc.changePct.toFixed(2)}%)</span>
+                                </span>
+                              ) : (
+                                <span style={{ color: C.dim, fontSize: 11 }}>{dailyLoading ? "⟳" : "―"}</span>
+                              )}
+                            </td>
+                            {/* 評価額（右端） */}
                             <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12.5 }}>
                               {fmt(h.market_value)}
                               {h.local_value != null && h.currency && (
@@ -1976,32 +2031,9 @@ web検索で以下の一次情報を中心に調査してください：
                                 <div style={{ fontSize: 9.5, color: C.dim }}>{h.qty.toLocaleString("en-US", { maximumFractionDigits: 8 })} {h.name}</div>
                               )}
                             </td>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12 }}>
-                              {(() => {
-                                if (cat.id !== "us") {
-                                  return <span style={{ color: (h.gain_loss || 0) >= 0 ? C.pos : C.neg }}>{fmtSign(h.gain_loss)}</span>;
-                                }
-                                // 米国株: ドル建て損益（現地）＋円建て損益（取引履歴の円簿価ベース）
-                                const usdGl = h.local_gain_loss;
-                                const cost = matchUsCost(h);
-                                const jpyGl = (cost && cost.jpy > 0 && h.market_value != null) ? Math.round(h.market_value - cost.jpy) : null;
-                                return (
-                                  <div>
-                                    <div style={{ color: (usdGl || 0) >= 0 ? C.pos : C.neg }}>
-                                      {usdGl != null ? `${usdGl >= 0 ? "+" : "-"}$${Math.abs(usdGl).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "―"}
-                                      <span style={{ fontSize: 8.5, color: C.dim, marginLeft: 3 }}>USD</span>
-                                    </div>
-                                    <div style={{ color: jpyGl == null ? C.dim : (jpyGl >= 0 ? C.pos : C.neg), fontSize: 11 }}>
-                                      {jpyGl != null ? fmtSign(jpyGl) : "円建—"}
-                                      {jpyGl != null && <span style={{ fontSize: 8.5, color: C.dim, marginLeft: 3 }}>円</span>}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-                            </td>
-                            <td style={{ padding: "9px 12px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, color: (h.gain_loss_pct || 0) >= 0 ? C.pos : C.neg }}>{fmtPct(h.gain_loss_pct)}</td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
