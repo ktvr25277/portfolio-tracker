@@ -774,7 +774,6 @@ export default function App() {
     if (k) window._portfolioApiKey = k;
     return k;
   });
-  if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
   const [theme, setTheme] = React.useState(() => {
     const t = localStorage.getItem("zenith_theme") || "dark";
     applyTheme(t);
@@ -787,6 +786,7 @@ export default function App() {
     setTheme(t);
     localStorage.setItem("zenith_theme", t);
   };
+  if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
   const [history, setHistory] = useState([]);
