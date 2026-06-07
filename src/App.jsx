@@ -31,6 +31,52 @@ const RE_KEY = "realestate_v1"; // 不動産データは独立キーで保存（
 // NISA年間投資枠の上限
 const ANNUAL_GROWTH = 2400000, ANNUAL_TSUMITATE = 1200000;
 
+
+// CSS変数でテーマ管理（スコープ問題なし）
+const THEMES = {
+  dark: {
+    "--bg":       "var(--bg)",
+    "--surface":  "var(--surface)",
+    "--surface2": "var(--surface2)",
+    "--border":   "var(--border)",
+    "--text":     "var(--text)",
+    "--muted":    "var(--muted)",
+    "--dim":      "var(--dim)",
+    "--accent":   "#3B82F6",
+    "--pos":      "#10B981",
+    "--neg":      "#EF4444",
+    "--tab-bg":   "var(--surface2)",
+    "--input-bg": "var(--surface2)",
+    "--tip-bg":   "var(--surface2)",
+    "--hero-grad":"linear-gradient(135deg,#1a2744 0%,#0F1626 100%)",
+    "--bar-track":"#1a2237",
+  },
+  light: {
+    "--bg":       "#F0F4F8",
+    "--surface":  "#FFFFFF",
+    "--surface2": "#F8FAFC",
+    "--border":   "var(--border)",
+    "--text":     "var(--text)",
+    "--muted":    "var(--muted)",
+    "--dim":      "var(--dim)",
+    "--accent":   "#2563EB",
+    "--pos":      "#059669",
+    "--neg":      "#DC2626",
+    "--tab-bg":   "var(--border)",
+    "--input-bg": "#F8FAFC",
+    "--tip-bg":   "var(--border)",
+    "--hero-grad":"linear-gradient(135deg,#1e3a8a 0%,#2563EB 100%)",
+    "--bar-track":"#D1D5DB",
+  },
+};
+
+function applyTheme(t) {
+  const vars = THEMES[t] || THEMES.dark;
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  root.setAttribute("data-theme", t);
+}
+
 const fmt = (v) => (v == null ? "―" : "¥" + Math.round(v).toLocaleString("ja-JP"));
 const fmtPct = (v) => (v == null ? "―" : (v >= 0 ? "+" : "") + Number(v).toFixed(2) + "%");
 const fmtSign = (v) => (v == null ? "―" : (v >= 0 ? "+¥" : "-¥") + Math.round(Math.abs(v)).toLocaleString("ja-JP"));
@@ -365,7 +411,7 @@ async function gistLoad(token, gistId) {
 
 // リターン(%)を緑〜赤のヒートマップ色に変換
 function retColor(r) {
-  if (r == null) return "#334155";
+  if (r == null) return "var(--surface2)";
   const t = Math.max(-1, Math.min(1, r / 40));
   const a = Math.abs(t);
   const hue = t >= 0 ? 152 : 6;
@@ -429,7 +475,7 @@ function Heatmap({ items, fmt }) {
         return (
           <g key={i}>
             <rect x={c.x + 2} y={c.y + 2} width={Math.max(0, c.w - 4)} height={Math.max(0, c.h - 4)} rx={8}
-              fill={retColor(c.ret)} stroke="#0A0E1A" strokeWidth={2} />
+              fill={retColor(c.ret)} stroke="var(--bg)" strokeWidth={2} />
             {!tiny && (
               <text x={c.x + 14} y={c.y + 30} fill="#fff" fontSize={small ? 20 : 26} fontWeight="700" style={{ pointerEvents: "none" }}>
                 {c.name.length > (small ? 6 : 12) ? c.name.slice(0, small ? 6 : 12) : c.name}
@@ -487,8 +533,8 @@ function PerfScatter({ holdings, fmt, fmtSign }) {
       <rect x={zeroX} y={padT} width={Math.max(0, W - padR - zeroX)} height={Math.max(0, zeroY - padT)} fill="rgba(16,185,129,0.05)" />
       <rect x={padL} y={zeroY} width={Math.max(0, zeroX - padL)} height={Math.max(0, H - padB - zeroY)} fill="rgba(248,113,113,0.05)" />
       {/* 0軸 */}
-      <line x1={zeroX} y1={padT} x2={zeroX} y2={H - padB} stroke="#475569" strokeWidth={1.5} strokeDasharray="6 5" />
-      <line x1={padL} y1={zeroY} x2={W - padR} y2={zeroY} stroke="#475569" strokeWidth={1.5} strokeDasharray="6 5" />
+      <line x1={zeroX} y1={padT} x2={zeroX} y2={H - padB} stroke="var(--dim)" strokeWidth={1.5} strokeDasharray="6 5" />
+      <line x1={padL} y1={zeroY} x2={W - padR} y2={zeroY} stroke="var(--dim)" strokeWidth={1.5} strokeDasharray="6 5" />
       {/* 軸ラベル */}
       <text x={(padL + W - padR) / 2} y={H - 12} fill="#64748B" fontSize={17} textAnchor="middle">リターン →</text>
       <text x={zeroX} y={H - padB + 24} fill="#64748B" fontSize={15} textAnchor="middle">0%</text>
@@ -649,28 +695,28 @@ function ApiKeySetup({ onSave }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0E1A", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 460, background: "rgba(20,27,45,0.9)", border: "1px solid #1E293B", borderRadius: 16, padding: 32 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 460, background: "var(--surface)", border: "1px solid #1E293B", borderRadius: 16, padding: 32 }}>
         <div style={{ fontSize: 11, color: "#3B82F6", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 6 }}>Zenith</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", marginBottom: 8 }}>APIキーの設定</div>
-        <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7, marginBottom: 24 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>APIキーの設定</div>
+        <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.7, marginBottom: 24 }}>
           スクショ解析・株式探索・為替取得にAnthropicのAPIキーが必要です。キーはこのブラウザのみに保存され、外部には送信されません。
         </div>
-        <div style={{ fontSize: 12, color: "#64748B", marginBottom: 6 }}>Anthropic APIキー</div>
+        <div style={{ fontSize: 12, color: "var(--dim)", marginBottom: 6 }}>Anthropic APIキー</div>
         <input type="password" placeholder="sk-ant-api03-..." value={key} onChange={e => setKey(e.target.value)}
           onKeyDown={e => e.key === "Enter" && test()}
-          style={{ width: "100%", padding: "10px 12px", background: "#0F1626", border: "1px solid #1E293B", borderRadius: 8, color: "#F1F5F9", fontSize: 13, fontFamily: "monospace", boxSizing: "border-box", marginBottom: 8 }} />
+          style={{ width: "100%", padding: "10px 12px", background: "var(--surface2)", border: "1px solid #1E293B", borderRadius: 8, color: "var(--text)", fontSize: 13, fontFamily: "monospace", boxSizing: "border-box", marginBottom: 8 }} />
         {err && <div style={{ fontSize: 12, color: "#F87171", marginBottom: 8 }}>⚠ {err}</div>}
         <button onClick={test} disabled={testing || !key.trim()} style={{
-          width: "100%", padding: "11px", background: testing ? "#334155" : "#3B82F6", border: "none", borderRadius: 9,
+          width: "100%", padding: "11px", background: testing ? "var(--surface2)" : "#3B82F6", border: "none", borderRadius: 9,
           color: "#fff", fontSize: 14, fontWeight: 700, cursor: testing ? "default" : "pointer", fontFamily: "inherit", marginBottom: 20,
         }}>{testing ? "⟳ 接続確認中..." : "接続してアプリを開く"}</button>
-        <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.7, borderTop: "1px solid #1E293B", paddingTop: 16 }}>
-          <strong style={{ color: "#64748B" }}>APIキーの取得方法</strong><br />
+        <div style={{ fontSize: 11, color: "var(--dim)", lineHeight: 1.7, borderTop: "1px solid #1E293B", paddingTop: 16 }}>
+          <strong style={{ color: "var(--dim)" }}>APIキーの取得方法</strong><br />
           1. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{ color: "#3B82F6" }}>console.anthropic.com</a> にGoogleアカウントでログイン<br />
           2. Settings → API Keys → 「Create Key」<br />
           3. 生成されたキー（sk-ant-...）をコピーして上に貼り付け<br /><br />
-          <strong style={{ color: "#64748B" }}>費用について</strong>: スクショ取込・為替・探索を合わせて月数十〜数百円程度です。
+          <strong style={{ color: "var(--dim)" }}>費用について</strong>: スクショ取込・為替・探索を合わせて月数十〜数百円程度です。
         </div>
       </div>
     </div>
@@ -684,9 +730,18 @@ export default function App() {
     return k;
   });
   if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
-  const [theme, setTheme] = useState(() => localStorage.getItem("zenith_theme") || "dark");
+  const [theme, setTheme] = React.useState(() => {
+    const t = localStorage.getItem("zenith_theme") || "dark";
+    applyTheme(t);
+    return t;
+  });
   const isDark = theme === "dark";
-  const toggleTheme = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); localStorage.setItem("zenith_theme", t); };
+  const toggleTheme = () => {
+    const t = theme === "dark" ? "light" : "dark";
+    applyTheme(t);
+    setTheme(t);
+    localStorage.setItem("zenith_theme", t);
+  };
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
   const [history, setHistory] = useState([]);
@@ -1452,14 +1507,18 @@ web検索で以下の一次情報を中心に調査してください：
   const taxableRealized = realizedThisYear.filter((r) => r.tax === "特定" || r.tax === "一般").reduce((s, r) => s + (r.pl || 0), 0);
   const hasRealized = realized.length > 0;
 
-  const C = isDark ? {
-    bg: "#0A0E1A", surface: "rgba(20,27,45,0.9)", border: "#1E293B",
-    text: "#F1F5F9", muted: "#94A3B8", dim: "#475569",
-    accent: "#3B82F6", pos: "#10B981", neg: "#EF4444",
-  } : {
-    bg: "#F1F5F9", surface: "#FFFFFF", border: "#E2E8F0",
-    text: "#0F172A", muted: "#475569", dim: "#94A3B8",
-    accent: "#2563EB", pos: "#059669", neg: "#DC2626",
+  // C: CSS変数を参照するショートハンド（JSXのstyle propで使用）
+  const C = {
+    bg:      "var(--bg)",
+    surface: "var(--surface)",
+    surface2:"var(--surface2)",
+    border:  "var(--border)",
+    text:    "var(--text)",
+    muted:   "var(--muted)",
+    dim:     "var(--dim)",
+    accent:  "var(--accent)",
+    pos:     "var(--pos)",
+    neg:     "var(--neg)",
   };
 
   const tabBtn = (id, label, icon) => (
@@ -1476,7 +1535,14 @@ web検索で以下の一次情報を中心に調査してください：
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 3 }}>Zenith</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+              <div style={{ fontSize: 10.5, color: C.accent, letterSpacing: "0.14em", textTransform: "uppercase" }}>Zenith</div>
+              <button onClick={toggleTheme} title={isDark ? "ライトモード" : "ダークモード"}
+                style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 20,
+                  padding: "2px 9px", cursor: "pointer", fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
+                {isDark ? "☀️" : "🌙"}
+              </button>
+            </div>
             <div style={{ fontSize: 21, fontWeight: 700 }}>資産ダッシュボード</div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -1486,7 +1552,7 @@ web検索で以下の一次情報を中心に調査してください：
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, background: "#0F1626", padding: 4, borderRadius: 10, marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--tab-bg)", padding: 4, borderRadius: 10, marginBottom: 12 }}>
           {tabBtn("dashboard", "ダッシュボード", "📊")}
           {tabBtn("holdings", "保有一覧", "📋")}
           {tabBtn("analysis", "分析", "🔍")}
@@ -1547,12 +1613,12 @@ web検索で以下の一次情報を中心に調査してください：
                 {totalValue > 0 && (
                   <div style={{ flex: 1, minWidth: 120, display: "flex", alignItems: "flex-end" }}>
                     <div style={{ width: "100%" }}>
-                      <div style={{ display: "flex", height: 8, borderRadius: 5, overflow: "hidden", background: "#0F1626" }}>
+                      <div style={{ display: "flex", height: 8, borderRadius: 5, overflow: "hidden", background: "var(--surface2)" }}>
                         <div style={{ width: `${totalValue > 0 ? (investAssets / totalValue) * 100 : 0}%`, background: C.accent }} />
                         <div style={{ width: `${totalValue > 0 ? (cashAssets / totalValue) * 100 : 0}%`, background: "#64748B" }} />
                       </div>
                       {totalLoan > 0 && (
-                        <div style={{ marginTop: 4, height: 8, borderRadius: 5, overflow: "hidden", background: "#0F1626" }}>
+                        <div style={{ marginTop: 4, height: 8, borderRadius: 5, overflow: "hidden", background: "var(--surface2)" }}>
                           <div style={{ width: `${totalValue > 0 ? Math.min(100, (totalLoan / totalValue) * 100) : 0}%`, height: "100%", background: "rgba(239,68,68,0.6)", borderRadius: 5 }} />
                         </div>
                       )}
@@ -1590,7 +1656,7 @@ web検索で以下の一次情報を中心に調査してください：
                         <Pie data={byCat} cx="50%" cy="50%" innerRadius={48} outerRadius={76} dataKey="value" paddingAngle={3}>
                           {byCat.map((e, i) => <Cell key={i} fill={e.color} />)}
                         </Pie>
-                        <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
+                        <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "var(--tip-bg)", border: `1px solid ${C.border}`, color: "var(--text)", borderRadius: 8, fontSize: 12  }} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div style={{ marginTop: 8 }}>
@@ -1612,7 +1678,7 @@ web検索で以下の一次情報を中心に調査してください：
                     <LineChart data={history}>
                       <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 10, fill: C.dim }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 10, fill: C.dim }} tickLine={false} axisLine={false} tickFormatter={(v) => `¥${(v / 1e6).toFixed(1)}M`} width={48} />
-                      <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: "var(--tip-bg)", border: `1px solid ${C.border}`, color: "var(--text)", borderRadius: 8, fontSize: 12  }} />
                       <Line type="monotone" dataKey="total" stroke={C.accent} strokeWidth={2} dot={{ r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -1658,7 +1724,7 @@ web検索で以下の一次情報を中心に調査してください：
                 {/* 課税区分ごとの集計 */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
                   {realizedByTax.map((t, i) => (
-                    <div key={i} style={{ flex: "1 1 90px", minWidth: 90, background: "#0F1626", borderRadius: 9, padding: "9px 11px" }}>
+                    <div key={i} style={{ flex: "1 1 90px", minWidth: 90, background: "var(--surface2)", borderRadius: 9, padding: "9px 11px" }}>
                       <div style={{ fontSize: 10.5, color: C.dim, marginBottom: 2 }}>{t.tax}{(t.tax === "NISA成長" || t.tax === "NISA積立" || t.tax === "旧NISA") ? "（非課税）" : ""}</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: t.pl >= 0 ? C.pos : C.neg, fontVariantNumeric: "tabular-nums" }}>{fmtSign(t.pl)}</div>
                       <div style={{ fontSize: 9.5, color: C.dim, marginTop: 1 }}>{t.count}件</div>
@@ -1929,7 +1995,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 {/* 指数バー */}
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>指数</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: "var(--surface2)", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mkt) * 1.5)}%`, background: C.dim }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: C.muted, minWidth: 50, textAlign: "right" }}>{mkt >= 0 ? "+" : ""}{mkt.toFixed(1)}%</span>
@@ -1937,7 +2003,7 @@ web検索で以下の一次情報を中心に調査してください：
                                 {mine && mine.ret != null ? (
                                   <div style={{ display: "flex", gap: 6, fontSize: 10.5, marginTop: 3, alignItems: "center" }}>
                                     <span style={{ color: C.dim, width: 44 }}>保有</span>
-                                    <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                    <div style={{ flex: 1, height: 11, background: "var(--surface2)", borderRadius: 3, overflow: "hidden" }}>
                                       <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mine.ret) * 1.5)}%`, background: mine.ret >= 0 ? C.pos : C.neg }} />
                                     </div>
                                     <span style={{ fontVariantNumeric: "tabular-nums", color: mine.ret >= 0 ? C.pos : C.neg, minWidth: 50, textAlign: "right" }}>{mine.ret >= 0 ? "+" : ""}{mine.ret.toFixed(1)}%</span>
@@ -1967,14 +2033,14 @@ web検索で以下の一次情報を中心に調査してください：
                                 </div>
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>指数</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: "var(--surface2)", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(mkt))}%`, background: C.dim }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: C.muted, minWidth: 50, textAlign: "right" }}>{mkt >= 0 ? "+" : ""}{mkt.toFixed(1)}%</span>
                                 </div>
                                 <div style={{ display: "flex", gap: 6, fontSize: 10.5, marginTop: 3, alignItems: "center" }}>
                                   <span style={{ color: C.dim, width: 44 }}>保有</span>
-                                  <div style={{ flex: 1, height: 11, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                                  <div style={{ flex: 1, height: 11, background: "var(--surface2)", borderRadius: 3, overflow: "hidden" }}>
                                     <div style={{ height: "100%", width: `${Math.min(100, Math.abs(g.ret))}%`, background: g.ret >= 0 ? C.pos : C.neg }} />
                                   </div>
                                   <span style={{ fontVariantNumeric: "tabular-nums", color: g.ret >= 0 ? C.pos : C.neg, minWidth: 50, textAlign: "right" }}>{g.ret >= 0 ? "+" : ""}{g.ret.toFixed(1)}%</span>
@@ -2065,7 +2131,7 @@ web検索で以下の一次情報を中心に調査してください：
                 </button>
               </div>
               <textarea value={stockQuery} onChange={(e) => setStockQuery(e.target.value)}
-                rows={8} style={{ width: "100%", padding: "10px 12px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", lineHeight: 1.7 }} />
+                rows={8} style={{ width: "100%", padding: "10px 12px", background: "var(--input-bg)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box", lineHeight: 1.7 }} />
               <div style={{ fontSize: 10, color: C.dim, marginTop: 6 }}>
                 ⚠ 本機能はAIによる調査・推定です。一次情報の正確性は必ずご自身でご確認ください。投資判断は自己責任でお願いします。
               </div>
@@ -2104,7 +2170,7 @@ web検索で以下の一次情報を中心に調査してください：
                 <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, marginBottom: 12 }}>
                   {/* ヘッダー */}
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: i < 3 ? ["#F59E0B", "#94A3B8", "#CD7F32"][i] : "#334155", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: i < 3 ? ["#F59E0B", "var(--muted)", "#CD7F32"][i] : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                       {s.rank || i + 1}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -2123,7 +2189,7 @@ web検索で以下の一次情報を中心に調査してください：
                     {scores.map((sc, j) => (
                       <div key={j} style={{ flex: "1 1 80px", minWidth: 70 }}>
                         <div style={{ fontSize: 9.5, color: C.dim, marginBottom: 3 }}>{sc.label}</div>
-                        <div style={{ height: 5, background: "#0F1626", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{ height: 5, background: "var(--surface2)", borderRadius: 3, overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${((sc.val || 0) / sc.max) * 100}%`, background: sc.color, borderRadius: 3 }} />
                         </div>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: sc.color, marginTop: 2, textAlign: "right" }}>{sc.val}/{sc.max}</div>
@@ -2195,7 +2261,7 @@ web検索で以下の一次情報を中心に調査してください：
                       placeholder={placeholder}
                       value={realestate[key]}
                       onChange={(e) => setRealestate((prev) => ({ ...prev, [key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 12px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "9px 12px", background: "var(--input-bg)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" }}
                     />
                     {hint && <div style={{ fontSize: 10.5, color: C.dim, marginTop: 4 }}>{hint}</div>}
                   </div>
@@ -2268,7 +2334,7 @@ web検索で以下の一次情報を中心に調査してください：
               <input
                 type="number" inputMode="decimal" placeholder="例: 152.3" value={manualUsdJpy}
                 onChange={(e) => setManualUsdJpy(e.target.value)}
-                style={{ width: 90, padding: "5px 8px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "inherit" }}
+                style={{ width: 90, padding: "5px 8px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "inherit" }}
               />
               {manualUsdJpy && <span style={{ color: C.accent }}>このレートを優先します</span>}
             </div>
@@ -2309,10 +2375,10 @@ web検索で以下の一次情報を中心に調査してください：
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input ref={tokenInputRef} type="password" placeholder="GitHubトークン（gist権限）" value={gistToken}
                   onChange={(e) => setGistToken(e.target.value)}
-                  style={{ padding: "8px 10px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
+                  style={{ padding: "8px 10px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
                 <input ref={idInputRef} type="text" placeholder="Gist ID（2台目以降に入力。1台目は空でOK）" value={gistId}
                   onChange={(e) => setGistId(e.target.value)}
-                  style={{ padding: "8px 10px", background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
+                  style={{ padding: "8px 10px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace" }} />
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <button onClick={connectGist} disabled={gistBusy} style={{ padding: "7px 16px", background: gistBusy ? C.border : C.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: gistBusy ? "default" : "pointer", fontFamily: "inherit" }}>
                     {gistBusy ? "⟳ 処理中..." : (gistId.trim() ? "🔗 接続して読込" : "✨ 新規作成して接続")}
@@ -2345,7 +2411,7 @@ web検索で以下の一次情報を中心に調査してください：
                 <div style={{ marginTop: 12 }}>
                   <textarea value={backupText} onChange={(e) => setBackupText(e.target.value)}
                     placeholder="ここにバックアップ文字列を貼り付けて「この内容を反映」を押してください"
-                    style={{ width: "100%", height: 90, padding: 10, background: "#0F1626", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box" }} />
+                    style={{ width: "100%", height: 90, padding: 10, background: "var(--input-bg)", border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 11, fontFamily: "monospace", resize: "vertical", boxSizing: "border-box" }} />
                   <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
                     <button onClick={() => { navigator.clipboard?.writeText(backupText); }} style={{ padding: "6px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, color: C.muted, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}>📋 コピー</button>
                     <button onClick={importBackup} style={{ padding: "6px 12px", background: C.accent, border: "none", borderRadius: 7, color: "#fff", fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}>この内容を反映</button>
@@ -2387,7 +2453,7 @@ function TxUploadCard({ count, status, error, onFile, selected, onSelect, C }) {
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }}
         style={{
-          border: `1.5px dashed ${drag || selected ? "#8B5CF6" : "#334155"}`, borderRadius: 10, padding: "16px 12px",
+          border: `1.5px dashed ${drag || selected ? "#8B5CF6" : "var(--surface2)"}`, borderRadius: 10, padding: "16px 12px",
           textAlign: "center", cursor: "pointer", fontSize: 12, lineHeight: 1.7,
           color: status === "loading" ? "#8B5CF6" : C.muted,
           background: drag ? "rgba(139,92,246,0.06)" : "transparent", transition: "all 0.15s",
@@ -2422,7 +2488,7 @@ function CryptoBuyUploadCard({ count, status, error, onFile, selected, onSelect,
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0]); }}
         style={{
-          border: `1.5px dashed ${drag || selected ? "#22C55E" : "#334155"}`, borderRadius: 10, padding: "16px 12px",
+          border: `1.5px dashed ${drag || selected ? "#22C55E" : "var(--surface2)"}`, borderRadius: 10, padding: "16px 12px",
           textAlign: "center", cursor: "pointer", fontSize: 12, lineHeight: 1.7,
           color: status === "loading" ? "#22C55E" : C.muted,
           background: drag ? "rgba(34,197,94,0.06)" : "transparent", transition: "all 0.15s",
@@ -2448,7 +2514,7 @@ function NisaGauge({ label, used, limit, color, C }) {
           {fmt(used)} / {fmt(limit)}
         </span>
       </div>
-      <div style={{ height: 9, background: "#0F1626", borderRadius: 5, overflow: "hidden" }}>
+      <div style={{ height: 9, background: "var(--surface2)", borderRadius: 5, overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: over ? C.neg : color, borderRadius: 5, transition: "width 0.4s" }} />
       </div>
       <div style={{ fontSize: 11, marginTop: 4, color: over ? C.neg : C.muted, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
@@ -2480,7 +2546,7 @@ function UploadCard({ u, hs, status, error, onFile, selected, onSelect, C }) {
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); onFile(e.dataTransfer.files[0], u.id, u.label); }}
         style={{
-          border: `1.5px dashed ${drag || selected ? u.color : "#334155"}`, borderRadius: 10, padding: "16px 12px",
+          border: `1.5px dashed ${drag || selected ? u.color : "var(--surface2)"}`, borderRadius: 10, padding: "16px 12px",
           textAlign: "center", cursor: "pointer", fontSize: 12, lineHeight: 1.7,
           color: status === "loading" ? u.color : C.muted,
           background: drag ? "rgba(59,130,246,0.06)" : "transparent", transition: "all 0.15s",

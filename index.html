@@ -10,6 +10,62 @@
     <link rel="manifest" href="/portfolio-tracker/manifest.json" />
     <link rel="apple-touch-icon" href="/portfolio-tracker/icon-192.png" />
     <title>Zenith</title>
+    <style>
+      /* デフォルト(ダーク)テーマ変数 */
+      :root {
+        --bg: #0A0E1A;
+        --surface: #141B2D;
+        --surface2: #0F1626;
+        --border: #1E293B;
+        --text: #F1F5F9;
+        --muted: #94A3B8;
+        --dim: #475569;
+        --accent: #3B82F6;
+        --pos: #10B981;
+        --neg: #EF4444;
+        --tab-bg: #0F1626;
+        --input-bg: #0F1626;
+        --tip-bg: #0F1626;
+        --hero-grad: linear-gradient(135deg,#1a2744 0%,#0F1626 100%);
+        --bar-track: #1a2237;
+      }
+      /* ライトテーマ変数 */
+      [data-theme="light"] {
+        --bg: #F0F4F8;
+        --surface: #FFFFFF;
+        --surface2: #F8FAFC;
+        --border: #CBD5E1;
+        --text: #0F172A;
+        --muted: #374151;
+        --dim: #6B7280;
+        --accent: #2563EB;
+        --pos: #059669;
+        --neg: #DC2626;
+        --tab-bg: #E2E8F0;
+        --input-bg: #F8FAFC;
+        --tip-bg: #1E293B;
+        --hero-grad: linear-gradient(135deg,#1e3a8a 0%,#2563EB 100%);
+        --bar-track: #D1D5DB;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); }
+      /* ライトモード: tableの縞模様など */
+      [data-theme="light"] input,
+      [data-theme="light"] textarea,
+      [data-theme="light"] select {
+        color: var(--text);
+      }
+      /* スムーズなテーマ切替 */
+      *, *::before, *::after {
+        transition: background-color 0.2s, border-color 0.2s, color 0.1s;
+      }
+    </style>
+    <script>
+      (function() {
+        var t = localStorage.getItem('zenith_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
