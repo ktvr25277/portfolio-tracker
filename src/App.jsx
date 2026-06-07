@@ -622,6 +622,104 @@ Names: ${JSON.stringify(names)}`;
 
 
 
+
+// ─── 取込プレビューモーダル ───────────────────────────────
+function ImportPreviewModal({ preview, onConfirm, onCancel, C }) {
+  const [rows, setRows] = React.useState([]);
+  React.useEffect(() => { if (preview) setRows(preview.rows.map(r => ({...r}))); }, [preview]);
+  if (!preview) return null;
+
+  const fmt = (v) => v == null ? "—" : Number(v).toLocaleString();
+  const update = (i, field, val) => setRows(prev => prev.map((r, idx) => idx === i ? {...r, [field]: val, _suspect: false} : r));
+  const remove = (i) => setRows(prev => prev.filter((_, idx) => idx !== i));
+  const hasSuspect = rows.some(r => r._suspect);
+
+  const CAT_LABEL = {
+    tokutei:"特定", nisa_growth:"NISA成長", nisa_old:"旧NISA", tsumitate:"積立NISA",
+    us:"海外株", cash_sbi:"買付余力", bank:"銀行", paypay:"PayPay", crypto:"暗号資産", loan:"ローン",
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:2000, display:"flex", alignItems:"flex-start", justifyContent:"center", padding:"20px 12px", overflowY:"auto" }}>
+      <div style={{ background:"var(--surface)", border:`2px solid ${hasSuspect ? "#F59E0B" : "var(--accent)"}`, borderRadius:16, width:"100%", maxWidth:720, marginTop:8 }}>
+        {/* ヘッダー */}
+        <div style={{ padding:"16px 20px", borderBottom:"1px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div>
+            <div style={{ fontSize:16, fontWeight:700 }}>
+              {hasSuspect ? "⚠️ 取込内容を確認してください" : "✅ 取込プレビュー"}
+            </div>
+            <div style={{ fontSize:12, color:"var(--muted)", marginTop:3 }}>
+              {hasSuspect ? "黄色の行は評価額がおかしい可能性があります。修正してから登録してください。" : "内容を確認して「登録する」を押してください。名前・コード・評価額はその場で編集できます。"}
+            </div>
+          </div>
+          <button onClick={onCancel} style={{ background:"transparent", border:"none", fontSize:20, cursor:"pointer", color:"var(--dim)", padding:"4px 8px" }}>✕</button>
+        </div>
+
+        {/* テーブル */}
+        <div style={{ overflowX:"auto", padding:"0 4px" }}>
+          <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse" }}>
+            <thead>
+              <tr style={{ borderBottom:"1px solid var(--border)" }}>
+                {["区分","銘柄名","コード","評価額","含み損益",""].map((h,i)=>(
+                  <th key={i} style={{ padding:"8px 10px", textAlign: i>=3?"right":"left", color:"var(--dim)", fontWeight:500, whiteSpace:"nowrap" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} style={{ borderBottom:"1px solid var(--border)", background: r._suspect ? "rgba(245,158,11,0.08)" : "transparent" }}>
+                  <td style={{ padding:"7px 10px", fontSize:11, color:"var(--dim)", whiteSpace:"nowrap" }}>{CAT_LABEL[r.cat]||r.cat}</td>
+                  <td style={{ padding:"4px 6px" }}>
+                    <input value={r.name||""} onChange={e=>update(i,"name",e.target.value)}
+                      style={{ width:"100%", background:"transparent", border:`1px solid ${r._suspect?"#F59E0B":"transparent"}`, borderRadius:4, padding:"3px 6px", color:"var(--text)", fontSize:12, fontWeight:600, fontFamily:"inherit", outline:"none" }}
+                      onFocus={e=>e.target.style.borderColor="var(--accent)"}
+                      onBlur={e=>e.target.style.borderColor=r._suspect?"#F59E0B":"transparent"} />
+                  </td>
+                  <td style={{ padding:"4px 6px" }}>
+                    <input value={r.code||""} onChange={e=>update(i,"code",e.target.value||null)}
+                      placeholder="—" style={{ width:52, background:"transparent", border:"1px solid transparent", borderRadius:4, padding:"3px 5px", color:"var(--accent)", fontSize:11, fontWeight:700, fontFamily:"monospace", textAlign:"center" }}
+                      onFocus={e=>e.target.style.borderColor="var(--accent)"}
+                      onBlur={e=>e.target.style.borderColor="transparent"} />
+                  </td>
+                  <td style={{ padding:"4px 6px", textAlign:"right" }}>
+                    <input type="number" value={r.market_value||""} onChange={e=>update(i,"market_value",Number(e.target.value))}
+                      style={{ width:90, background: r._suspect?"rgba(245,158,11,0.12)":"transparent", border:`1px solid ${r._suspect?"#F59E0B":"transparent"}`, borderRadius:4, padding:"3px 6px", color: r._suspect?"#F59E0B":"var(--text)", fontSize:12, fontWeight:600, textAlign:"right", fontFamily:"inherit" }}
+                      onFocus={e=>e.target.style.borderColor="var(--accent)"}
+                      onBlur={e=>e.target.style.borderColor=r._suspect?"#F59E0B":"transparent"} />
+                  </td>
+                  <td style={{ padding:"4px 6px", textAlign:"right", color:(r.gain_loss||0)>=0?"var(--pos)":"var(--neg)", fontSize:12, fontWeight:600, whiteSpace:"nowrap" }}>
+                    {(r.gain_loss||0)>=0?"+":""}{fmt(r.gain_loss)}
+                  </td>
+                  <td style={{ padding:"4px 8px", textAlign:"center" }}>
+                    <button onClick={()=>remove(i)} title="削除" style={{ background:"transparent", border:"none", cursor:"pointer", color:"var(--dim)", fontSize:15, padding:"2px 4px" }}>🗑</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* フッター */}
+        <div style={{ padding:"14px 20px", borderTop:"1px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
+          <div style={{ fontSize:12, color:"var(--dim)" }}>
+            {rows.length}件 · 評価額合計 ¥{rows.reduce((s,r)=>s+(r.market_value||0),0).toLocaleString()}
+          </div>
+          <div style={{ display:"flex", gap:10 }}>
+            <button onClick={onCancel} style={{ padding:"9px 20px", borderRadius:9, border:"1px solid var(--border)", background:"transparent", color:"var(--text)", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+              キャンセル
+            </button>
+            <button onClick={()=>onConfirm(rows.map(({_suspect,...r})=>r), preview.scopeId)}
+              disabled={hasSuspect}
+              style={{ padding:"9px 20px", borderRadius:9, border:"none", background: hasSuspect?"var(--border)":"var(--accent)", color: hasSuspect?"var(--dim)":"#fff", fontSize:13, fontWeight:700, cursor: hasSuspect?"not-allowed":"pointer", fontFamily:"inherit" }}>
+              {hasSuspect ? "⚠️ 要確認（黄色を修正してから）" : "登録する"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // APIキー設定画面
 function ApiKeySetup({ onSave }) {
   const [key, setKey] = React.useState("");
@@ -697,7 +795,7 @@ export default function App() {
   if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
   const [tab, setTab] = useState("dashboard");
   const [holdingsRaw, setHoldings] = useState([]);
-  const [importWarnings, setImportWarnings] = useState(null); // { warnings, pendingH, scopeId }
+  const [importPreview, setImportPreview] = useState(null); // { rows, scopeId } 取込プレビュー
   const [history, setHistory] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [usCost, setUsCost] = useState([]); // 米国株の取得情報（円簿価算出用）
@@ -937,23 +1035,17 @@ export default function App() {
         }));
       }
 
-      // ── 取込バリデーション ──
-      const warnings = newH.filter(h => {
-        if (h.cat === 'loan' || h.cat === 'cash_sbi' || h.cat === 'cash' || !h.market_value) return false;
+      // ── 取込プレビュー（常に表示） ──
+      // 怪しい値にフラグを立てる
+      const rowsWithFlag = newH.map(h => {
         const mv = h.market_value || 0;
         const gl = h.gain_loss || 0;
-        // 取得コスト = 評価額 - 含み損益 がマイナス → 評価額が単価のまま
-        if (mv - gl < 0) return true;
-        // 含み損益の絶対値が評価額より大きい → おかしい
-        if (Math.abs(gl) > mv * 2) return true;
-        return false;
-      }).map(h => ({ name: h.name, market_value: h.market_value, gain_loss: h.gain_loss }));
-
-      if (warnings.length > 0) {
-        setImportWarnings({ warnings, pendingH: newH, scopeId });
-        setStatus((s) => ({ ...s, [scopeId]: "done" }));
-        return;
-      }
+        const isSuspect = !(['loan','cash_sbi','cash'].includes(h.cat)) && mv > 0 && (mv - gl < 0 || Math.abs(gl) > mv * 2);
+        return { ...h, _suspect: isSuspect };
+      });
+      setImportPreview({ rows: rowsWithFlag, scopeId });
+      setStatus((s) => ({ ...s, [scopeId]: "done" }));
+      return;
 
       setHoldings((prev) => {
         const merged = [...prev.filter((h) => h.src !== scopeId), ...newH];
