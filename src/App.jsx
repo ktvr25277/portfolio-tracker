@@ -115,14 +115,20 @@ Output ALL items (cash + holdings) in one flat JSON array.`
     ? `Bank balance screen. Output one object per balance:
 Format: [{"n":"普通預金","mv":残高,"g":0,"p":0}]`
     : scopeId === "sbi_us"
-    ? `This is a foreign stock holdings screen. For EACH holding detect its trading currency from the screen.
-- "cur" = currency code shown (USD, HKD, EUR, GBP, CNY, SGD, etc.). Look at the 通貨 column or the currency symbol ($, HK$, €, £).
-- "mv" = market value in the LOCAL currency (現地通貨建ての評価額 = 保有数量 × 現在値). NOT yen.
-- "g" = 評価損益 in the LOCAL currency.
-- "p" = g ÷ (mv - g) × 100, 2 decimals.
-- "jpy" = the 円換算 evaluation amount IF the screen explicitly shows a yen value; otherwise null.
-Also extract "cd" = ticker symbol (e.g. "AAPL", "NVDA"). Leave null if not shown.
-Format: [{"n":"銘柄名","cd":"TICKERornull","cur":"USD","mv":現地評価額,"g":現地損益,"p":損益率,"jpy":円換算額ornull}]`
+    ? `This is SBI Securities foreign stock holdings screen (口座サマリー外貨建商品 or similar).
+
+Each holding row shows: [TICKER 日本語名] on one line, then quantity/price/value on the next.
+- "cd" = ticker symbol shown in CAPS before the Japanese name (e.g. "JD", "KO", "MU", "AMZN", "SPXL"). CRITICAL: always extract this.
+- "n" = Japanese name that follows the ticker (e.g. "JDドットコム ADR", "コカ・コーラ", "アマゾンドットコム"). Do NOT include the ticker in "n".
+- "cur" = currency. Default "USD" unless screen shows otherwise (HKD, EUR etc.).
+- "mv" = 保有数量 × 現在値 (local currency). If shown directly use it.
+- "g" = 外貨建評価損益 in local currency (the colored +/- number shown).
+- "p" = g ÷ (mv - g) × 100, rounded to 2 decimals.
+- "jpy" = 円換算評価額 if explicitly shown, else null.
+- "cat" = classify by section header: "us" for 特定預り, "nisa_us" for NISA預り, "old_nisa_us" for 旧NISA預り.
+
+Format: [{"n":"日本語名","cd":"TICKER","cur":"USD","mv":現地評価額,"g":現地損益,"p":損益率,"jpy":null}]
+Output flat JSON array only, no markdown.`
     : scopeId === "coincheck"
     ? `This is a Coincheck cryptocurrency holdings screen (Japanese, values in JPY).
 For each coin output its symbol, JPY valuation, and quantity held.
