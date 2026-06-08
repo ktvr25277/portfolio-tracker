@@ -1303,7 +1303,7 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をStooq.com経由で取得（無料・安定）
+  // 前日比をStooq.com OHLCV履歴から取得
   const fetchDailyChange = useCallback(async () => {
     const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
     if (!targets.length) return;
@@ -1311,24 +1311,28 @@ web検索で以下の一次情報を中心に調査してください：
     const result = {};
 
     const fetchOne = async (code, isUs) => {
-      // Stooqのシンボル: 日本株=7550.jp, 米国株=AMZN.US
       const symbol = isUs ? `${code}.us` : `${code}.jp`;
-      // d2=日付, c1=変化額, p=前日比% → CSV形式
-      const stooqUrl = `https://stooq.com/q/l/?s=${symbol}&f=d2c1p&e=csv`;
+      // 直近5日のOHLCV CSV: Date,Open,High,Low,Close,Volume
+      const stooqUrl = `https://stooq.com/q/d/l/?s=${symbol}&i=d`;
       const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(stooqUrl)}`;
       try {
-        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
         if (!r.ok) return null;
         const raw = await r.json();
-        const csv = raw.contents || '';
-        // CSVの2行目: Date,Close,Change,Change%
-        const lines = csv.trim().split('\n');
+        const csv = (raw.contents || '').trim();
+        const lines = csv.split('\n').filter(l => l.trim() && !l.startsWith('Date'));
         if (lines.length < 2) return null;
-        const cols = lines[1].split(',');
-        const change = parseFloat(cols[1]);
-        const changePct = parseFloat(cols[2]);
-        if (isNaN(change) || isNaN(changePct)) return null;
-        return { change, changePct };
+        // 最新2行（降順の場合もあるので日付でソート）
+        const rows = lines.map(l => {
+          const cols = l.split(',');
+          return { date: cols[0], close: parseFloat(cols[4]) };
+        }).filter(r => !isNaN(r.close)).sort((a, b) => a.date > b.date ? -1 : 1);
+        if (rows.length < 2) return null;
+        const cur = rows[0].close, prev = rows[1].close;
+        return {
+          change: Math.round((cur - prev) * 100) / 100,
+          changePct: Math.round((cur - prev) / prev * 10000) / 100,
+        };
       } catch { return null; }
     };
 
