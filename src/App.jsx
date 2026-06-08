@@ -1303,33 +1303,40 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をYahoo Finance経由で取得（CORSプロキシ使用）
+  // 前日比をStooq.com経由で取得（無料・安定）
   const fetchDailyChange = useCallback(async () => {
     const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
     if (!targets.length) return;
     setDailyLoading(true);
     const result = {};
-    await Promise.allSettled(targets.map(async h => {
+
+    const fetchOne = async (code, isUs) => {
+      // Stooqのシンボル: 日本株=7550.jp, 米国株=AMZN.US
+      const symbol = isUs ? `${code}.us` : `${code}.jp`;
+      // d2=日付, c1=変化額, p=前日比% → CSV形式
+      const stooqUrl = `https://stooq.com/q/l/?s=${symbol}&f=d2c1p&e=csv`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(stooqUrl)}`;
       try {
-        const symbol = h.cat === 'us' ? h.code : `${h.code}.T`;
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
-        const r = await fetch(proxyUrl);
-        if (!r.ok) return;
-        const wrapper = await r.json();
-        const d = JSON.parse(wrapper.contents);
-        const quotes = d?.chart?.result?.[0]?.indicators?.quote?.[0];
-        const closes = quotes?.close?.filter(v => v != null);
-        if (closes && closes.length >= 2) {
-          const prev = closes[closes.length - 2];
-          const cur = closes[closes.length - 1];
-          result[h.code] = {
-            change: Math.round((cur - prev) * 100) / 100,
-            changePct: Math.round((cur - prev) / prev * 10000) / 100,
-          };
-        }
-      } catch {}
+        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return null;
+        const raw = await r.json();
+        const csv = raw.contents || '';
+        // CSVの2行目: Date,Close,Change,Change%
+        const lines = csv.trim().split('\n');
+        if (lines.length < 2) return null;
+        const cols = lines[1].split(',');
+        const change = parseFloat(cols[1]);
+        const changePct = parseFloat(cols[2]);
+        if (isNaN(change) || isNaN(changePct)) return null;
+        return { change, changePct };
+      } catch { return null; }
+    };
+
+    await Promise.allSettled(targets.map(async h => {
+      const dc = await fetchOne(h.code, h.cat === 'us');
+      if (dc) result[h.code] = dc;
     }));
+
     setDailyChange(result);
     setDailyLoading(false);
   }, [holdingsRaw]);
