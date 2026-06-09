@@ -1303,9 +1303,9 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をFinnhub APIで取得（日本株・米国株両対応）
+  // 前日比をFinnhub APIで取得（米国株のみ・無料プラン対応）
   const fetchDailyChange = useCallback(async () => {
-    const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
+    const targets = holdingsRaw.filter(h => h.code && h.cat === 'us');
     if (!targets.length) return;
     setDailyLoading(true);
     const result = {};
@@ -1314,13 +1314,10 @@ web検索で以下の一次情報を中心に調査してください：
 
     await Promise.allSettled(targets.map(async h => {
       try {
-        // 日本株: T.7550、米国株: AMZN
-        const symbol = h.cat === 'us' ? h.code : `T.${h.code}`;
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${h.code}&token=${FINNHUB_KEY}`);
         if (!r.ok) return;
         const d = await r.json();
-        // d: { c: 現在値, d: 変化額, dp: 変化%, pc: 前日終値 }
-        if (d.d != null && d.dp != null) {
+        if (d.d != null && d.dp != null && d.d !== 0) {
           result[h.code] = {
             change: Math.round(d.d * 100) / 100,
             changePct: Math.round(d.dp * 100) / 100,
