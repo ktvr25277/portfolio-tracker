@@ -1303,42 +1303,30 @@ web検索で以下の一次情報を中心に調査してください：
     }
   };
 
-  // 前日比をStooq.com OHLCV履歴から取得
+  // 前日比をFinnhub APIで取得（日本株・米国株両対応）
   const fetchDailyChange = useCallback(async () => {
     const targets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate','us'].includes(h.cat));
     if (!targets.length) return;
     setDailyLoading(true);
     const result = {};
-
-    const fetchOne = async (code, isUs) => {
-      const symbol = isUs ? `${code}.us` : `${code}.jp`;
-      // 直近5日のOHLCV CSV: Date,Open,High,Low,Close,Volume
-      const stooqUrl = `https://stooq.com/q/d/l/?s=${symbol}&i=d`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(stooqUrl)}`;
-      try {
-        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-        if (!r.ok) return null;
-        const raw = await r.json();
-        const csv = (raw.contents || '').trim();
-        const lines = csv.split('\n').filter(l => l.trim() && !l.startsWith('Date'));
-        if (lines.length < 2) return null;
-        // 最新2行（降順の場合もあるので日付でソート）
-        const rows = lines.map(l => {
-          const cols = l.split(',');
-          return { date: cols[0], close: parseFloat(cols[4]) };
-        }).filter(r => !isNaN(r.close)).sort((a, b) => a.date > b.date ? -1 : 1);
-        if (rows.length < 2) return null;
-        const cur = rows[0].close, prev = rows[1].close;
-        return {
-          change: Math.round((cur - prev) * 100) / 100,
-          changePct: Math.round((cur - prev) / prev * 10000) / 100,
-        };
-      } catch { return null; }
-    };
+    const FINNHUB_KEY = localStorage.getItem('finnhub_key') || '';
+    if (!FINNHUB_KEY) { setDailyLoading(false); return; }
 
     await Promise.allSettled(targets.map(async h => {
-      const dc = await fetchOne(h.code, h.cat === 'us');
-      if (dc) result[h.code] = dc;
+      try {
+        // 日本株: T.7550、米国株: AMZN
+        const symbol = h.cat === 'us' ? h.code : `T.${h.code}`;
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        // d: { c: 現在値, d: 変化額, dp: 変化%, pc: 前日終値 }
+        if (d.d != null && d.dp != null) {
+          result[h.code] = {
+            change: Math.round(d.d * 100) / 100,
+            changePct: Math.round(d.dp * 100) / 100,
+          };
+        }
+      } catch {}
     }));
 
     setDailyChange(result);
@@ -2581,6 +2569,19 @@ web検索で以下の一次情報を中心に調査してください：
               </div>
               <div style={{ fontSize: 10, color: C.dim, marginTop: 10, lineHeight: 1.6 }}>
                 ※ トークンはこのアプリ内（あなたのClaudeアカウント領域）に各端末ローカル保存され、Gist以外には送信しません。Gistは必ず非公開（Secret）で作成します。トークンは<code>gist</code>スコープが必要です。
+              </div>
+            </div>
+
+            <div style={{ marginTop: 16, padding: 15, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: C.text, marginBottom: 6 }}>📈 前日比（Finnhub APIキー）</div>
+              <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 7 }}>
+                日本株・米国株の前日比を取得します。<a href="https://finnhub.io" target="_blank" rel="noreferrer" style={{ color: C.accent }}>finnhub.io</a> で無料登録してAPIキーを入力してください。
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input type="password" placeholder="Finnhub API Key" defaultValue={localStorage.getItem('finnhub_key') || ''}
+                  onChange={e => localStorage.setItem('finnhub_key', e.target.value.trim())}
+                  style={{ flex: 1, padding: "8px 10px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace", minWidth: 200 }} />
+                {localStorage.getItem('finnhub_key') && <span style={{ fontSize: 11, color: C.pos, alignSelf: "center" }}>● 設定済み</span>}
               </div>
             </div>
 
