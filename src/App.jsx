@@ -2032,14 +2032,22 @@ web検索で以下の一次情報を中心に調査してください：
                             </td>
                             {/* 前日比 */}
                             <td style={{ padding: "7px 10px", borderBottom: `1px solid ${C.bg}`, textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, whiteSpace: "nowrap" }}>
-                              {dc ? (
-                                <span style={{ color: dc.change >= 0 ? C.pos : C.neg }}>
-                                  {dc.change >= 0 ? "+" : ""}{cat.id === "us"
-                                    ? `$${dc.change.toFixed(2)}`
-                                    : dc.change >= 0 ? `+${Math.round(dc.change).toLocaleString()}円` : `${Math.round(dc.change).toLocaleString()}円`}
-                                  <span style={{ fontSize: 10, marginLeft: 3 }}>({dc.changePct >= 0 ? "+" : ""}{dc.changePct.toFixed(2)}%)</span>
-                                </span>
-                              ) : (
+                              {dc ? (() => {
+                                // 保有分合計の変化額 = 変化率 × 評価額（ドル建て or 円建て）
+                                const localVal = h.local_value || (h.market_value / (h.fx_rate || 1));
+                                const totalChangeUsd = cat.id === "us" ? Math.round(dc.changePct / 100 * localVal * 100) / 100 : null;
+                                const totalChangeJpy = cat.id !== "us" ? Math.round(dc.changePct / 100 * (h.market_value || 0)) : null;
+                                const totalChange = cat.id === "us" ? totalChangeUsd : totalChangeJpy;
+                                const isPos = (totalChange || 0) >= 0;
+                                return (
+                                  <span style={{ color: isPos ? C.pos : C.neg }}>
+                                    {cat.id === "us"
+                                      ? `${isPos ? "+" : ""}$${Math.abs(totalChangeUsd || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                                      : `${isPos ? "+" : ""}${(totalChangeJpy || 0).toLocaleString()}円`}
+                                    <div style={{ fontSize: 10 }}>({dc.changePct >= 0 ? "+" : ""}{dc.changePct.toFixed(2)}%)</div>
+                                  </span>
+                                );
+                              })() : (
                                 <span style={{ color: C.dim, fontSize: 11 }}>{dailyLoading ? "⟳" : "―"}</span>
                               )}
                             </td>
