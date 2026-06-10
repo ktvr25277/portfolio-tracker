@@ -17,7 +17,10 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
-          secrets: |
-            JQUANTS_API_KEY
+      - name: Set JQUANTS_API_KEY secret
+        run: |
+          echo "${{ secrets.JQUANTS_API_KEY }}" | npx wrangler secret put JQUANTS_API_KEY --name zenith-jquants
+        working-directory: worker
         env:
-          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
