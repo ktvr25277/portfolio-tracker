@@ -2574,28 +2574,37 @@ web検索で以下の一次情報を中心に調査してください：
               <div style={{ fontSize: 11.5, color: C.dim, lineHeight: 1.8, marginBottom: 7 }}>
                 米国株の前日比を取得します。<a href="https://finnhub.io" target="_blank" rel="noreferrer" style={{ color: C.accent }}>finnhub.io</a> で無料登録してAPIキーを入力してください。
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                <input type="password" placeholder="Finnhub API Key" defaultValue={localStorage.getItem('finnhub_key') || ''}
-                  onChange={e => localStorage.setItem('finnhub_key', e.target.value.trim())}
-                  style={{ flex: 1, padding: "8px 10px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 12, fontFamily: "monospace", minWidth: 200 }} />
-              </div>
-              <button onClick={async () => {
-                const key = localStorage.getItem('finnhub_key') || '';
-                if (!key) { alert('APIキーを入力してください'); return; }
-                try {
-                  const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=AMZN&token=${key}`);
-                  const d = await r.json();
-                  if (d.c && d.d != null) {
-                    alert(`✅ 接続OK！\nAMZN: $${d.c} (${d.d >= 0 ? '+' : ''}${d.d?.toFixed(2)} / ${d.dp?.toFixed(2)}%)`);
-                  } else if (d.error) {
-                    alert(`❌ エラー: ${d.error}`);
-                  } else {
-                    alert('❌ データなし: ' + JSON.stringify(d));
-                  }
-                } catch(e) { alert('❌ 接続失敗: ' + e.message); }
-              }} style={{ padding: "7px 14px", background: C.accent, border: "none", borderRadius: 7, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                接続テスト（AMZN）
-              </button>
+              {(() => {
+                const [fkey, setFkey] = React.useState(localStorage.getItem('finnhub_key') || '');
+                const [fstatus, setFstatus] = React.useState('');
+                const save = () => { localStorage.setItem('finnhub_key', fkey.trim()); setFstatus('saved'); };
+                const test = async () => {
+                  const key = fkey.trim();
+                  if (!key) { setFstatus('nokey'); return; }
+                  setFstatus('testing');
+                  try {
+                    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=AMZN&token=${key}`);
+                    const d = await r.json();
+                    if (d.c && d.d != null) { localStorage.setItem('finnhub_key', key); setFstatus('ok:' + d.c + '/' + d.dp?.toFixed(2)); }
+                    else setFstatus('err:' + (d.error || JSON.stringify(d)));
+                  } catch(e) { setFstatus('err:' + e.message); }
+                };
+                return (
+                  <div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                      <input value={fkey} onChange={e => { setFkey(e.target.value); setFstatus(''); }}
+                        placeholder="d8k80i..." type="text"
+                        style={{ flex: 1, padding: "8px 10px", background: "var(--surface2)", border: `1px solid ${C.border}`, borderRadius: 7, color: C.text, fontSize: 11, fontFamily: "monospace", minWidth: 180 }} />
+                      <button onClick={test} style={{ padding: "8px 14px", background: C.accent, border: "none", borderRadius: 7, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>テスト&保存</button>
+                    </div>
+                    {fstatus === 'testing' && <div style={{ fontSize: 11, color: C.dim }}>⟳ 確認中...</div>}
+                    {fstatus === 'saved' && <div style={{ fontSize: 11, color: C.pos }}>✅ 保存しました</div>}
+                    {fstatus === 'nokey' && <div style={{ fontSize: 11, color: C.neg }}>キーを入力してください</div>}
+                    {fstatus.startsWith('ok:') && <div style={{ fontSize: 11, color: C.pos }}>✅ 接続OK！ AMZN ${fstatus.split('/')[0].replace('ok:','')} ({fstatus.split('/')[1]}%)</div>}
+                    {fstatus.startsWith('err:') && <div style={{ fontSize: 11, color: C.neg }}>❌ {fstatus.replace('err:','')}</div>}
+                  </div>
+                );
+              })()}
             </div>
 
             <div style={{ marginTop: 16, padding: 15, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12 }}>
