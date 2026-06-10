@@ -1336,26 +1336,47 @@ web検索で以下の一次情報を中心に調査してください：
 
   // 前日比をFinnhub APIで取得（米国株のみ・無料プラン対応）
   const fetchDailyChange = useCallback(async () => {
-    const targets = holdingsRaw.filter(h => h.code && h.cat === 'us');
-    if (!targets.length) return;
+    const jpTargets = holdingsRaw.filter(h => h.code && ['tokutei','nisa_growth','nisa_old','tsumitate'].includes(h.cat));
+    const usTargets = holdingsRaw.filter(h => h.code && h.cat === 'us');
+    if (!jpTargets.length && !usTargets.length) return;
     setDailyLoading(true);
     const result = {};
-    const FINNHUB_KEY = localStorage.getItem('finnhub_key') || '';
-    if (!FINNHUB_KEY) { setDailyLoading(false); return; }
 
-    await Promise.allSettled(targets.map(async h => {
+    // 日本株: Cloudflare Workerプロキシ経由J-Quants
+    await Promise.allSettled(jpTargets.map(async h => {
       try {
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${h.code}&token=${FINNHUB_KEY}`);
+        const code = h.code.padEnd(5, '0'); // 7550→75500
+        const r = await fetch(`https://zenith-jquants.hiroki-373.workers.dev?code=${code}`);
         if (!r.ok) return;
         const d = await r.json();
-        if (d.d != null && d.dp != null && d.d !== 0) {
+        const rows = (d.data || []).filter(x => x.AdjC).sort((a,b) => a.Date > b.Date ? -1 : 1);
+        if (rows.length >= 2) {
+          const cur = rows[0].AdjC, prev = rows[1].AdjC;
           result[h.code] = {
-            change: Math.round(d.d * 100) / 100,
-            changePct: Math.round(d.dp * 100) / 100,
+            change: Math.round((cur - prev) * 100) / 100,
+            changePct: Math.round((cur - prev) / prev * 10000) / 100,
           };
         }
       } catch {}
     }));
+
+    // 米国株: Finnhub
+    const FINNHUB_KEY = localStorage.getItem('finnhub_key') || '';
+    if (FINNHUB_KEY) {
+      await Promise.allSettled(usTargets.map(async h => {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${h.code}&token=${FINNHUB_KEY}`);
+          if (!r.ok) return;
+          const d = await r.json();
+          if (d.d != null && d.dp != null && d.d !== 0) {
+            result[h.code] = {
+              change: Math.round(d.d * 100) / 100,
+              changePct: Math.round(d.dp * 100) / 100,
+            };
+          }
+        } catch {}
+      }));
+    }
 
     setDailyChange(result);
     setDailyLoading(false);
